@@ -202,7 +202,6 @@ namespace itk
 
     int timeSize = (int)inputVectorVolume->GetNumberOfComponentsPerPixel();
 
-    int   aif_FirstPeakIndex = 0;
     float aif_MaxSlope = 0.0f;
 
     // Some of the outputs are optional and may not be calculated.
@@ -284,7 +283,7 @@ namespace itk
     }
     else if (m_BATCalculationMode == "PeakGradient")
     {
-      compute_bolus_arrival_time(m_AIF.size(), &m_AIF[0], m_AIFBATIndex, aif_FirstPeakIndex, aif_MaxSlope);
+      compute_bolus_arrival_time(m_AIF.size(), &m_AIF[0], m_AIFBATIndex, aif_MaxSlope);
     }
 
     // Compute the area under the curve for the AIF
@@ -308,7 +307,6 @@ namespace itk
     float tempMaxSlope = 0.0f;
     float tempAUC = 0.0f;
     int   BATIndex = 0;
-    int   FirstPeakIndex = 0;
 
     const VectorVolumeType* inputVectorVolume = this->GetInput();
 
@@ -371,7 +369,7 @@ namespace itk
       success = true;
       float optimizerErrorCode = -1;
       tempKtrans = tempVe = tempFpv = tempMaxSlope = tempAUC = 0.0;
-      BATIndex = FirstPeakIndex = 0;
+      BATIndex = 0;
 
       if (!this->GetROIMask() || (this->GetROIMask() && roiMaskVolumeIter.Get()))
       {
@@ -392,7 +390,7 @@ namespace itk
           }
           else if (m_BATCalculationMode == "PeakGradient")
           {
-            status = compute_bolus_arrival_time(timeSize, &vectorVoxel[0], BATIndex, FirstPeakIndex, tempMaxSlope);
+            status = compute_bolus_arrival_time(timeSize, &vectorVoxel[0], BATIndex, tempMaxSlope);
           }
 
           if (!status)

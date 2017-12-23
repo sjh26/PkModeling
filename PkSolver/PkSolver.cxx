@@ -475,30 +475,20 @@ namespace itk
     return max;
   }
 
-  bool compute_bolus_arrival_time(int signalSize, const float* SignalY,
-    int& ArrivalTime, int& FirstPeak, float& MaxSlope)
+  bool compute_bolus_arrival_time(int signalSize, const float* SignalY, int& ArrivalTime, float& MaxSlope)
   {
-    float* y0 = new float[signalSize];  // Input pixel values
-    int i = 0;
-    for (i = 0; i < signalSize; i++) //{
-      y0[i] = SignalY[i];
-
     int skip1 = 0;             // Leading points to ignore
     int skip2 = 1;             // Trailing points to ignore
-    //int* t = new int[signalSize];       // time value
     float* yd = new float[signalSize];  // working buffer
 
     int CpIndex = 0;
-    float Cp = get_signal_max(signalSize, SignalY, CpIndex); //this->m_TimeSeriesY->max_value();
+    get_signal_max(signalSize, SignalY, CpIndex); //this->m_TimeSeriesY->max_value();
 
     // Detect ArrivalTime Detection failure and report indeterminate results.
     if (CpIndex < 0)
     {
       ArrivalTime = 0;
-      FirstPeak = 0;
       MaxSlope = 0;
-      delete[] y0;
-      //delete [] t;
       delete[] yd;
       return false;
     }
@@ -506,19 +496,14 @@ namespace itk
     // Step 1: Smoothing done using Savizky-Golay before this call on Signal or Conc. data
 
     // Step 2: Spatial derivative of smoothed data
-
-    memcpy(yd, y0, signalSize*sizeof(float));
-    ///this->ComputeDerivative(yd);
-    compute_derivative(signalSize, y0, yd);
+    memcpy(yd, SignalY, signalSize*sizeof(float));
+    compute_derivative(signalSize, SignalY, yd);
 
     // Step 3: Find point of steepest descent/ascent
-    //int min_index = skip1;
-
-    //added this with Sandeep's suggestions
     int max_index = skip1;
     float max = yd[max_index];
 
-    for (i = max_index; i<signalSize - skip2 - 1; i++)
+    for (int i = max_index; i<signalSize - skip2 - 1; i++)
     {
       if (yd[i] > max)
       {
@@ -530,29 +515,15 @@ namespace itk
     float thresh = (float)(max / 10.0);
 
     // Step 4: Arrival Time detection
+    int i;
     for (i = max_index; i >= skip1; i--)
     {
       if (yd[i] < thresh)
         break;
     }
-
     ArrivalTime = i + 1;
 
-    // Step 5: Peak Time detection
-    //for( i=min_index; i<signalSize-1-skip2; i++) {
-    /// jvm - removing this loop as it is not used
-    // for( i=skip1; i<signalSize-1-skip2; i++) {
-    //   if(yd[i] >= thresh || y0[i] >= y0[i-1])
-    //     break;
-    // }
-    // FirstPeak = i;
-    // jvm - end of remove
-    //changing the peak as global peak
-    FirstPeak = CpIndex;
-
-    //delete [] t;
     delete[] yd;
-    delete[] y0;
     return true;
   }
 
@@ -647,7 +618,7 @@ namespace itk
     std::string BATCalculationMode, int constantBAT)
   {
     double S0 = 0;
-    int ArrivalTime, FirstPeak;
+    int ArrivalTime;
     float MaxSlope;
     bool result;
 
@@ -660,7 +631,7 @@ namespace itk
     }
     else if (BATCalculationMode == "PeakGradient")
     {
-      result = compute_bolus_arrival_time(signalSize, SignalY, ArrivalTime, FirstPeak, MaxSlope);//same
+      result = compute_bolus_arrival_time(signalSize, SignalY, ArrivalTime, MaxSlope);//same
     }
 
     if (result == false)

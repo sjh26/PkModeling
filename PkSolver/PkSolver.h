@@ -336,8 +336,7 @@ namespace itk
 
   float get_signal_max(int signalSize, const float* SignalY, int& index);
 
-  bool compute_bolus_arrival_time(int signalSize, const float* SignalY,
-    int& ArrivalTime, int& FirstPeak, float& MaxSlope);
+  bool compute_bolus_arrival_time(int signalSize, const float* SignalY, int& ArrivalTime, float& MaxSlope);
 
   void compute_gradient(int signalSize, const float* SignalY, float* SignalGradient);
 
