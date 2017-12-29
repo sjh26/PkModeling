@@ -57,10 +57,17 @@ namespace itk
     /** Set and get the number of DWI channels. */
     itkGetMacro(S0GradThresh, float);
     itkSetMacro(S0GradThresh, float);
-    itkGetMacro(BATCalculationMode, std::string);
-    itkSetMacro(BATCalculationMode, std::string);
-    itkGetMacro(constantBAT, int);
-    itkSetMacro(constantBAT, int);
+
+    void SetBatEstimator(const BolusArrivalTime::BolusArrivalTimeEstimator* batEstimator)
+    {
+      m_batEstimator = batEstimator;
+    }
+
+    const BolusArrivalTime::BolusArrivalTimeEstimator* GetBatEstimator() const
+    {
+      return this->m_batEstimator;
+    }
+
 
   protected:
     SignalIntensityToS0ImageFilter();
@@ -83,8 +90,7 @@ namespace itk
     void operator=(const Self &);      // purposely not implemented
 
     float                  m_S0GradThresh;
-    std::string      m_BATCalculationMode;
-    int m_constantBAT;
+    const BolusArrivalTime::BolusArrivalTimeEstimator* m_batEstimator;
   };
 
 }; // end namespace itk

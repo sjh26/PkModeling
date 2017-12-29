@@ -12,9 +12,20 @@ if(ITK_INSTALL_PREFIX)
     )
 endif()
 
+set(LIBRARY_SRCS
+  ${LIBRARY_NAME}.h
+  ${LIBRARY_NAME}.cxx
+  BolusArrivalTimeEstimator.h
+  BolusArrivalTimeEstimatorConstant.h
+  BolusArrivalTimeEstimatorPeakGradient.h
+  BolusArrivalTimeEstimatorPeakGradient.cxx
+  SignalComputationUtils.h
+  SignalComputationUtils.cxx
+  )
+
 include_directories(${${LIBRARY_NAME}_INCLUDE_DIRS})
 
-add_library(${LIBRARY_NAME} STATIC ${LIBRARY_NAME}.cxx ${LIBRARY_NAME}.h)
+add_library(${LIBRARY_NAME} STATIC ${LIBRARY_SRCS})
 target_link_libraries(${LIBRARY_NAME} ${ITK_LIBRARIES})
 if (CMAKE_SYSTEM MATCHES "Linux")
   message("LINUX DETECTED: Setting compile flag -fPIC for " ${LIBRARY_NAME})

@@ -18,11 +18,6 @@ endif()
 #-----------------------------------------------------------------------------
 set(MODULE_SRCS
   ${MODULE_NAME}.cxx
-  BolusArrivalTimeEstimator.h
-  BolusArrivalTimeEstimator.cxx
-  BolusArrivalTimeEstimatorConstant.h
-  BolusArrivalTimeEstimatorPeakGradient.h
-  BolusArrivalTimeEstimatorPeakGradient.cxx
   itkSignalIntensityToS0ImageFilter.h
   itkSignalIntensityToS0ImageFilter.hxx
   itkSignalIntensityToConcentrationImageFilter.h

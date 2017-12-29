@@ -32,8 +32,7 @@ void SignalIntensityToConcentrationImageFilter<TInputImage, TMaskImage, TOutputI
   typename S0VolumeFilterType::Pointer S0VolumeFilter = S0VolumeFilterType::New();
   S0VolumeFilter->SetInput(inputVectorVolume);
   S0VolumeFilter->SetS0GradThresh(m_S0GradThresh);
-  S0VolumeFilter->SetBATCalculationMode(m_BATCalculationMode);
-  S0VolumeFilter->SetconstantBAT(m_constantBAT);
+  S0VolumeFilter->SetBatEstimator(m_batEstimator);
   S0VolumeFilter->Update();
   InternalVolumePointerType S0Volume = S0VolumeFilter->GetOutput();
   

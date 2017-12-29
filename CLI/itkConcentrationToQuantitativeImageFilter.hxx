@@ -36,8 +36,6 @@ namespace itk
     m_UsePopulationAIF = false;
     m_UsePrescribedAIF = false;
     m_ModelType = itk::LMCostFunction::TOFTS_2_PARAMETER;
-    m_constantBAT = 0;
-    m_BATCalculationMode = "PeakGradient";
     this->Superclass::SetNumberOfRequiredInputs(1);
     this->Superclass::SetNthOutput(1, static_cast<TOutputImage*>(this->MakeOutput(1).GetPointer()));  // Ve
     this->Superclass::SetNthOutput(2, static_cast<TOutputImage*>(this->MakeOutput(2).GetPointer()));  // FPV
@@ -202,8 +200,6 @@ namespace itk
 
     int timeSize = (int)inputVectorVolume->GetNumberOfComponentsPerPixel();
 
-    float aif_MaxSlope = 0.0f;
-
     // Some of the outputs are optional and may not be calculated.
     // Let's initialize those to all zeros
     OutputVolumeType *fpv = this->GetFPVOutput();
@@ -277,14 +273,7 @@ namespace itk
       itkExceptionMacro("A mask image over which to establish the AIF or a prescribed AIF must be assigned. If prescribing an AIF, then UsePrescribedAIF must be set to true.");
     }
     // Compute the bolus arrival time
-    if (m_BATCalculationMode == "UseConstantBAT")
-    {
-      m_AIFBATIndex = m_constantBAT;
-    }
-    else if (m_BATCalculationMode == "PeakGradient")
-    {
-      compute_bolus_arrival_time(m_AIF.size(), &m_AIF[0], m_AIFBATIndex, aif_MaxSlope);
-    }
+    m_AIFBATIndex = m_batEstimator->getBATIndex(m_AIF.size(), &m_AIF[0]);
 
     // Compute the area under the curve for the AIF
     m_aifAUC = area_under_curve(timeSize, &m_Timing[0], &m_AIF[0], m_AIFBATIndex, m_AUCTimeInterval);
@@ -381,19 +370,10 @@ namespace itk
         // Compute the bolus arrival time and the max slope parameter
         if (success)
         {
-          int status;
-          // Compute the bolus arrival time
-          if (m_BATCalculationMode == "UseConstantBAT")
-          {
-            BATIndex = m_constantBAT;
-            status = 1;
+          try {
+            BATIndex = m_batEstimator->getBATIndex(timeSize, &vectorVoxel[0], &tempMaxSlope);
           }
-          else if (m_BATCalculationMode == "PeakGradient")
-          {
-            status = compute_bolus_arrival_time(timeSize, &vectorVoxel[0], BATIndex, tempMaxSlope);
-          }
-
-          if (!status)
+          catch (...)
           {
             success = false;
             optimizerErrorCode = BAT_DETECTION_FAILED;
@@ -438,7 +418,7 @@ namespace itk
             tempKtrans, tempVe, tempFpv,
             m_fTol, m_gTol, m_xTol,
             m_epsilon, m_maxIter, m_hematocrit,
-            optimizer, costFunction, m_ModelType, m_constantBAT, m_BATCalculationMode);
+            optimizer, costFunction, m_ModelType, m_batEstimator);
 
           itk::LMCostFunction::ParametersType param(3);
           param[0] = tempKtrans; param[1] = tempVe;

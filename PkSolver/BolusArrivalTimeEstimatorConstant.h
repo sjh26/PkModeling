@@ -9,14 +9,20 @@ namespace BolusArrivalTime
   class BolusArrivalTimeEstimatorConstant : public BolusArrivalTimeEstimator
   {
   public:
-    BolusArrivalTimeEstimatorConstant(int defaultBolusArrivalTimeIndex) : BolusArrivalTimeEstimator(defaultBolusArrivalTimeIndex) {}
+    BolusArrivalTimeEstimatorConstant(int defaultBolusArrivalTimeIndex) : m_defaultBATIndex(defaultBolusArrivalTimeIndex) {}
 
     virtual ~BolusArrivalTimeEstimatorConstant() {}
 
-    virtual int getBATIndex(int signalSize, const float* signal)
+    virtual int getBATIndex(int signalSize, const float* signal, float* optRet_maxSlope /*= nullptr*/) const
     {
+      if (optRet_maxSlope) {
+        *optRet_maxSlope = 0.0;
+      }
       return m_defaultBATIndex;
     }
+
+  protected:
+    const int m_defaultBATIndex;
 
   };
 

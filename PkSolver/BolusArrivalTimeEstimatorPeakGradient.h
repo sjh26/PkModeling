@@ -9,11 +9,14 @@ namespace BolusArrivalTime
   class BolusArrivalTimeEstimatorPeakGradient : public BolusArrivalTimeEstimator
   {
   public:
-    BolusArrivalTimeEstimatorPeakGradient(int defaultBolusArrivalTimeIndex);
+    BolusArrivalTimeEstimatorPeakGradient() {}
 
     virtual ~BolusArrivalTimeEstimatorPeakGradient() {}
 
-    virtual int getBATIndex(int signalSize, const float* signal);
+    virtual int getBATIndex(int signalSize, const float* signal, float* optRet_maxSlope = nullptr) const;
+
+  private:
+    virtual int getArrivalIndex(int start, int maxSlopeIdx, const float* signal) const;
 
   };
 

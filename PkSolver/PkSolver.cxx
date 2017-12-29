@@ -17,18 +17,20 @@
 #include <itkImageRegionIterator.h>
 #include <itkLevenbergMarquardtOptimizer.h>
 #include "PkSolver.h"
+#include "SignalComputationUtils.h"
 #include "itkTimeProbesCollectorBase.h"
 #include <string>
 
 namespace itk
 {
+  using namespace PkSolver;
   //
   // Support routines/classes used internally in the PkSolver
   //
   static itk::TimeProbesCollectorBase probe;
 
-  int m_ConstantBAT;
-  std::string m_BATCalculationMode;
+  // TODO This is a very bad itermediate hack during step-wise refactoring. Will refactor PkSolver into a proper class and make this a member. 
+  const BolusArrivalTime::BolusArrivalTimeEstimator* m_batEstimator;
 
   //
   // Implementation of the PkSolver API
@@ -43,8 +45,7 @@ namespace itk
     float epsilon, int maxIter,
     float hematocrit,
     int modelType,
-    int constantBAT,
-    const std::string BATCalculationMode)
+    const BolusArrivalTime::BolusArrivalTimeEstimator* batEstimator)
   {
     // Note the unit: timeAxis should be in minutes!! This could be related to the following parameters!!
     // fTol      =  1e-4;  // Function value tolerance
@@ -53,8 +54,7 @@ namespace itk
     // epsilon   =  1e-9;    // Step
     // maxIter   =   200;  // Maximum number of iterations
 
-    m_BATCalculationMode = BATCalculationMode;
-    m_ConstantBAT = constantBAT;
+    m_batEstimator = batEstimator;
 
     // Levenberg Marquardt optimizer
     itk::LevenbergMarquardtOptimizer::Pointer  optimizer = itk::LevenbergMarquardtOptimizer::New();
@@ -154,9 +154,7 @@ namespace itk
     itk::LevenbergMarquardtOptimizer* optimizer,
     LMCostFunction* costFunction,
     int modelType,
-    int constantBAT,
-    const std::string BATCalculationMode
-    )
+    const BolusArrivalTime::BolusArrivalTimeEstimator* batEstimator)
   {
     //std::cout << "in pk solver" << std::endl;
     // probe.Start("pk_solver");
@@ -168,8 +166,7 @@ namespace itk
     // maxIter   =   200;  // Maximum number of iterations
     //std::cerr << "In pkSolver!" << std::endl;
 
-    m_BATCalculationMode = BATCalculationMode;
-    m_ConstantBAT = constantBAT;
+    m_batEstimator = batEstimator;
 
     // Levenberg Marquardt optimizer
 
@@ -316,7 +313,7 @@ namespace itk
     const double constB = (1 - exp_TR_BloodT1) / (1 - cos_alpha*exp_TR_BloodT1);
 
     if (s0 == -1.0f)
-      s0 = compute_s0_individual_curve(signalSize, SignalIntensityCurve, S0GradThresh, m_BATCalculationMode, m_ConstantBAT);
+      s0 = compute_s0_individual_curve(signalSize, SignalIntensityCurve, S0GradThresh, m_batEstimator);
 
     for (unsigned int t = 0; t < signalSize; ++t)
     {
@@ -462,71 +459,6 @@ namespace itk
     }
   }
 
-  float get_signal_max(int signalSize, const float* SignalY, int& index)
-  {
-    float max = -1E10f;
-    index = -1;
-    for (int i = 0; i<signalSize; i++)
-      if (SignalY[i] > max)
-      {
-        max = SignalY[i];
-        index = i;
-      }
-    return max;
-  }
-
-  bool compute_bolus_arrival_time(int signalSize, const float* SignalY, int& ArrivalTime, float& MaxSlope)
-  {
-    int skip1 = 0;             // Leading points to ignore
-    int skip2 = 1;             // Trailing points to ignore
-    float* yd = new float[signalSize];  // working buffer
-
-    int CpIndex = 0;
-    get_signal_max(signalSize, SignalY, CpIndex); //this->m_TimeSeriesY->max_value();
-
-    // Detect ArrivalTime Detection failure and report indeterminate results.
-    if (CpIndex < 0)
-    {
-      ArrivalTime = 0;
-      MaxSlope = 0;
-      delete[] yd;
-      return false;
-    }
-
-    // Step 1: Smoothing done using Savizky-Golay before this call on Signal or Conc. data
-
-    // Step 2: Spatial derivative of smoothed data
-    memcpy(yd, SignalY, signalSize*sizeof(float));
-    compute_derivative(signalSize, SignalY, yd);
-
-    // Step 3: Find point of steepest descent/ascent
-    int max_index = skip1;
-    float max = yd[max_index];
-
-    for (int i = max_index; i<signalSize - skip2 - 1; i++)
-    {
-      if (yd[i] > max)
-      {
-        max = yd[i];
-        max_index = i;
-      }
-    }
-    MaxSlope = max;
-    float thresh = (float)(max / 10.0);
-
-    // Step 4: Arrival Time detection
-    int i;
-    for (i = max_index; i >= skip1; i--)
-    {
-      if (yd[i] < thresh)
-        break;
-    }
-    ArrivalTime = i + 1;
-
-    delete[] yd;
-    return true;
-  }
-
   void compute_gradient_old(int signalSize, const float* SignalY, float* SignalGradient)
   {
     typedef itk::Image<float, 1>   ImageType;
@@ -614,27 +546,16 @@ namespace itk
     return float(S0);
   }
 
-  float compute_s0_individual_curve(int signalSize, const float* SignalY, float S0GradThresh,
-    std::string BATCalculationMode, int constantBAT)
+  float compute_s0_individual_curve(int signalSize, const float* SignalY, float S0GradThresh, const BolusArrivalTime::BolusArrivalTimeEstimator* batEstimator)
   {
     double S0 = 0;
     int ArrivalTime;
-    float MaxSlope;
     bool result;
 
-    if (BATCalculationMode == "UseConstantBAT")
-    {
-      // Use constant BAT
-
-      ArrivalTime = constantBAT;
-      result = true;
+    try {
+      ArrivalTime = batEstimator->getBATIndex(signalSize, SignalY);
     }
-    else if (BATCalculationMode == "PeakGradient")
-    {
-      result = compute_bolus_arrival_time(signalSize, SignalY, ArrivalTime, MaxSlope);//same
-    }
-
-    if (result == false)
+    catch (...)
     {
       ///printf ("  Compute compute_s0_individual_curve fails! S0 = 0.\n");
       return 0;
