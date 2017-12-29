@@ -32,6 +32,7 @@
 
 #include <sstream>
 #include <fstream>
+#include <memory>
 
 #define TESTMODE_ERROR_TOLERANCE 0.1
 
