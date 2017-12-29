@@ -13,7 +13,7 @@ namespace BolusArrivalTime
 
     virtual ~BolusArrivalTimeEstimatorConstant() {}
 
-    virtual int getBATIndex(int signalSize, const float* signal, float* optRet_maxSlope /*= nullptr*/) const
+    virtual int getBATIndex(int signalSize, const float* signal, float* optRet_maxSlope = NULL) const
     {
       if (optRet_maxSlope) {
         *optRet_maxSlope = 0.0;

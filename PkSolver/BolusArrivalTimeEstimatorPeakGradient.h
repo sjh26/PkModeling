@@ -13,7 +13,7 @@ namespace BolusArrivalTime
 
     virtual ~BolusArrivalTimeEstimatorPeakGradient() {}
 
-    virtual int getBATIndex(int signalSize, const float* signal, float* optRet_maxSlope = nullptr) const;
+    virtual int getBATIndex(int signalSize, const float* signal, float* optRet_maxSlope = NULL) const;
 
   private:
     virtual int getArrivalIndex(int start, int maxSlopeIdx, const float* signal) const;

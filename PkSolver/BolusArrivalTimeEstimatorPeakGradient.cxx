@@ -6,7 +6,7 @@ namespace BolusArrivalTime
 {
   using namespace PkSolver;
 
-  int BolusArrivalTimeEstimatorPeakGradient::getBATIndex(int signalSize, const float* signal, float* optRet_maxSlope /*= nullptr*/) const
+  int BolusArrivalTimeEstimatorPeakGradient::getBATIndex(int signalSize, const float* signal, float* optRet_maxSlope /*= NULL*/) const
   {
     if (signalSize <= 0) {
       throw NoSignalException();

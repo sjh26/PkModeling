@@ -308,7 +308,7 @@ namespace itk
     int maxIter = 200,
     float hematocrit = 0.4f,
     int modelType = itk::LMCostFunction::TOFTS_2_PARAMETER,
-    const BolusArrivalTime::BolusArrivalTimeEstimator* batEstimator = nullptr);
+    const BolusArrivalTime::BolusArrivalTimeEstimator* batEstimator = NULL);
 
   // returns diagnostic error code from the VNL optimizer,
   //  as defined by OptimizerDiagnosticCodes, and masked to indicate
@@ -321,7 +321,7 @@ namespace itk
     itk::LevenbergMarquardtOptimizer* optimizer,
     LMCostFunction* costFunction,
     int modelType = itk::LMCostFunction::TOFTS_2_PARAMETER,
-    const BolusArrivalTime::BolusArrivalTimeEstimator* batEstimator = nullptr);
+    const BolusArrivalTime::BolusArrivalTimeEstimator* batEstimator = NULL);
 
   void pk_report();
   void pk_clear();
