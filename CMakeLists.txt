@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.5.0)
 
+set(CMAKE_CXX_STANDARD 11)
+
 set(EXTENSION_NAME PkModeling)
 set(EXTENSION_HOMEPAGE "https://github.com/millerjv/PkModeling/wiki/PkModeling")
 set(EXTENSION_CATEGORY "Quantification")
