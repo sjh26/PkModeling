@@ -131,10 +131,16 @@ namespace itk
     itkSetMacro(AUCTimeInterval, float);
     itkGetMacro(ModelType, int);
     itkSetMacro(ModelType, int);
-    itkGetMacro(constantBAT, int);
-    itkSetMacro(constantBAT, int);
-    itkGetMacro(BATCalculationMode, std::string);
-    itkSetMacro(BATCalculationMode, std::string);
+
+    void SetBatEstimator(const BolusArrivalTime::BolusArrivalTimeEstimator* batEstimator)
+    {
+      m_batEstimator = batEstimator;
+    }
+
+    const BolusArrivalTime::BolusArrivalTimeEstimator* GetBatEstimator() const
+    {
+      return this->m_batEstimator;
+    }
 
     void SetTiming(const std::vector<float>& inputTiming);
     const std::vector<float>& GetTiming();
@@ -238,8 +244,7 @@ namespace itk
     float  m_AUCTimeInterval;
     int    m_AIFBATIndex;
     int    m_ModelType;
-    int m_constantBAT;
-    std::string m_BATCalculationMode;
+    const BolusArrivalTime::BolusArrivalTimeEstimator* m_batEstimator;
 
     std::vector<float> m_Timing;
 

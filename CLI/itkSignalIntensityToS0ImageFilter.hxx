@@ -54,7 +54,7 @@ namespace itk
       vectorVoxel += inputVectorVoxel; // shorthand for a copy/cast
       S0Temp =
         compute_s0_individual_curve((int)inputVectorVolume->GetNumberOfComponentsPerPixel(),
-        const_cast<float*>(vectorVoxel.GetDataPointer()), m_S0GradThresh, m_BATCalculationMode, m_constantBAT);
+        const_cast<float*>(vectorVoxel.GetDataPointer()), m_S0GradThresh, m_batEstimator);
       S0VolumeIter.Set(static_cast<OutputPixelType>(S0Temp));
       ++S0VolumeIter;
       ++inputVectorVolumeIter;

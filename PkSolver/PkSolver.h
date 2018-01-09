@@ -20,9 +20,21 @@
 #include <vnl/algo/vnl_convolve.h>
 #include "itkArray.h"
 #include <string>
+#include <exception>
+#include "BolusArrivalTimeEstimator.h"
+
 
 // work around compile error on Win
 #define M_PI 3.1415926535897932384626433832795
+
+class NoSignalException : public std::exception
+{
+  virtual const char* what() const throw()
+  {
+    return "The provided signal vector/array was emtpy, no computation can be performed.";
+  }
+};
+
 
 // codes defined in ITKv4 vnl_levenberg_marquardt.cxx:386
 enum OptimizerDiagnosticCodes
@@ -296,8 +308,7 @@ namespace itk
     int maxIter = 200,
     float hematocrit = 0.4f,
     int modelType = itk::LMCostFunction::TOFTS_2_PARAMETER,
-    int constantBAT = 0,
-    const std::string BATCalculationMode = "PeakGradient");
+    const BolusArrivalTime::BolusArrivalTimeEstimator* batEstimator = NULL);
 
   // returns diagnostic error code from the VNL optimizer,
   //  as defined by OptimizerDiagnosticCodes, and masked to indicate
@@ -310,8 +321,7 @@ namespace itk
     itk::LevenbergMarquardtOptimizer* optimizer,
     LMCostFunction* costFunction,
     int modelType = itk::LMCostFunction::TOFTS_2_PARAMETER,
-    int constantBAT = 0,
-    const std::string BATCalculationMode = "PeakGradient");
+    const BolusArrivalTime::BolusArrivalTimeEstimator* batEstimator = NULL);
 
   void pk_report();
   void pk_clear();
@@ -334,11 +344,6 @@ namespace itk
 
   void compute_derivative_backward(int signalSize, const float* SignalY, float* YDeriv);
 
-  float get_signal_max(int signalSize, const float* SignalY, int& index);
-
-  bool compute_bolus_arrival_time(int signalSize, const float* SignalY,
-    int& ArrivalTime, int& FirstPeak, float& MaxSlope);
-
   void compute_gradient(int signalSize, const float* SignalY, float* SignalGradient);
 
   void compute_gradient_forward(int signalSize, const float* SignalY, float* SignalGradient);
@@ -348,7 +353,7 @@ namespace itk
   float compute_s0_using_sumsignal_properties(int signalSize, const float* SignalY,
     const short* lowGradIndex, int FirstPeak);
 
-  float compute_s0_individual_curve(int signalSize, const float* SignalY, float S0GradThresh, std::string BATCalculationMode, int constantBAT);
+  float compute_s0_individual_curve(int signalSize, const float* SignalY, float S0GradThresh, const BolusArrivalTime::BolusArrivalTimeEstimator* batEstimator);
 
 };
 

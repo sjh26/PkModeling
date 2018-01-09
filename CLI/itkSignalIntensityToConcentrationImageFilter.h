@@ -103,10 +103,16 @@ namespace itk
     itkSetMacro(RGD_relaxivity, float);
     itkGetMacro(S0GradThresh, float);
     itkSetMacro(S0GradThresh, float);
-    itkGetMacro(BATCalculationMode, std::string);
-    itkSetMacro(BATCalculationMode, std::string);
-    itkGetMacro(constantBAT, int);
-    itkSetMacro(constantBAT, int);
+
+    void SetBatEstimator(const BolusArrivalTime::BolusArrivalTimeEstimator* batEstimator)
+    {
+      m_batEstimator = batEstimator;
+    }
+
+    const BolusArrivalTime::BolusArrivalTimeEstimator* GetBatEstimator() const
+    {
+      return this->m_batEstimator;
+    }
 
     // Set a mask image for specifying the location of the arterial
     // input function. This is interpretted as a binary image with
@@ -177,8 +183,7 @@ namespace itk
     float m_FA;
     float m_RGD_relaxivity;
     float m_S0GradThresh;
-    std::string m_BATCalculationMode;
-    int m_constantBAT;
+    const BolusArrivalTime::BolusArrivalTimeEstimator* m_batEstimator;
 
     //! Private internal helper class to handle getting the correct T1Pre value.
     //! Use it like an Iterator to walk through the voxel positions.

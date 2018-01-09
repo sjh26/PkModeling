@@ -26,8 +26,13 @@
 #include "itkSignalIntensityToConcentrationImageFilter.h"
 #include "itkConcentrationToQuantitativeImageFilter.h"
 
+#include "BolusArrivalTimeEstimator.h"
+#include "BolusArrivalTimeEstimatorConstant.h"
+#include "BolusArrivalTimeEstimatorPeakGradient.h"
+
 #include <sstream>
 #include <fstream>
+#include <memory>
 
 #define TESTMODE_ERROR_TOLERANCE 0.1
 
@@ -221,9 +226,11 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     multiVolumeReader->Update();
     typename VectorVolumeType::Pointer inputVectorVolume = multiVolumeReader->GetOutput();
 
-    //Look for tags representing the acquisition parameters
-    //
-    //
+    // Setup BAT Estimator
+    std::unique_ptr<BolusArrivalTime::BolusArrivalTimeEstimator> batEstimator(new BolusArrivalTime::BolusArrivalTimeEstimatorConstant(ConstantBAT));
+    if (BATCalculationMode == "PeakGradient") {
+      batEstimator.reset(new BolusArrivalTime::BolusArrivalTimeEstimatorPeakGradient());
+    }
 
     // Trigger times
     std::vector<float> Timing;
@@ -368,8 +375,7 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     converter->SetT1PreTissue(T1PreTissueValue);
     converter->SetTR(TRValue);
     converter->SetFA(FAValue);
-    converter->SetBATCalculationMode(BATCalculationMode);
-    converter->SetconstantBAT(ConstantBAT);
+    converter->SetBatEstimator(batEstimator.get());
     converter->SetRGD_relaxivity(RelaxivityValue);
     converter->SetS0GradThresh(S0GradValue);
 
@@ -423,8 +429,7 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     quantifier->Setepsilon(Epsilon);
     quantifier->SetmaxIter(MaxIter);
     quantifier->Sethematocrit(Hematocrit);
-    quantifier->SetconstantBAT(ConstantBAT);
-    quantifier->SetBATCalculationMode(BATCalculationMode);
+    quantifier->SetBatEstimator(batEstimator.get());
     if (ROIMaskFileName != "")
     {
       quantifier->SetROIMask(roiMaskVolume);
