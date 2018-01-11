@@ -1,7 +1,7 @@
 #ifndef __PkModeling_h
 #define __PkModeling_h
 
-#include "PkModelingCLP.h"
+#include "Configuration.h"
 
 #include "itkMetaDataObject.h"
 #include "itkImageFileReader.h"
@@ -25,28 +25,20 @@
 #include <memory>
 
 
-//! Abstract base class to allow declaration of a variable for a PkModeling class 
-//! without knowing the template types yet.
-class PkModelingBase {
-public:
-  virtual ~PkModelingBase() {}
-  virtual int DoIt(int argc, char * argv[]) = 0;
-};
+class PkModeling {
+private:
+  const Configuration cfg;
 
-//! Templated implemetation of the actual PkModeling class.
-template <class VectorVolumePixelType, class MaskVolumePixelType>
-class PkModeling : public PkModelingBase {
 public:
-
   static const unsigned int VectorVolumeDimension = 3;
-  typedef itk::VectorImage<VectorVolumePixelType, VectorVolumeDimension> VectorVolumeType;
+  typedef itk::VectorImage<float, VectorVolumeDimension>     VectorVolumeType;
   typedef itk::VectorImage<float, VectorVolumeDimension>     FloatVectorVolumeType;
-  typedef typename VectorVolumeType::RegionType              VectorVolumeRegionType;
+  typedef VectorVolumeType::RegionType              VectorVolumeRegionType;
   typedef itk::ImageFileReader<VectorVolumeType>             VectorVolumeReaderType;
   typedef itk::ImageFileWriter<FloatVectorVolumeType>        VectorVolumeWriterType;
 
   static const unsigned int MaskVolumeDimension = 3;
-  typedef itk::Image<MaskVolumePixelType, MaskVolumeDimension> MaskVolumeType;
+  typedef itk::Image<unsigned short, MaskVolumeDimension>      MaskVolumeType;
   typedef itk::ImageFileReader<MaskVolumeType>                 MaskVolumeReaderType;
 
   typedef itk::Image<float, VectorVolumeDimension> OutputVolumeType;
@@ -55,7 +47,7 @@ public:
   typedef itk::ResampleImageFilter<MaskVolumeType, MaskVolumeType> ResamplerType;
   typedef itk::NearestNeighborInterpolateImageFunction<MaskVolumeType> InterpolatorType;
 
-  PkModeling() {}
+  PkModeling(Configuration config) : cfg(config) {}
   virtual ~PkModeling() {}
 
 #define SimpleAttributeGetMethodMacro(name, key, type)     \
@@ -205,10 +197,10 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     return false;
   }
 
-  typename MaskVolumeType::Pointer getMaskVolumeOrNull(const std::string& maskFileName)
+  MaskVolumeType::Pointer getMaskVolumeOrNull(const std::string& maskFileName)
   {
-    typename MaskVolumeReaderType::Pointer maskVolumeReader = MaskVolumeReaderType::New();
-    typename MaskVolumeType::Pointer maskVolume = NULL;
+    MaskVolumeReaderType::Pointer maskVolumeReader = MaskVolumeReaderType::New();
+    MaskVolumeType::Pointer maskVolume = NULL;
     if (maskFileName != "")
     {
       maskVolumeReader->SetFileName(maskFileName.c_str());
@@ -218,12 +210,12 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     return maskVolume;
   }
 
-  typename MaskVolumeType::Pointer getResampledMaskVolumeOrNull(const std::string& maskFileName, const typename VectorVolumeType::Pointer referenceVolume)
+  MaskVolumeType::Pointer getResampledMaskVolumeOrNull(const std::string& maskFileName, const VectorVolumeType::Pointer referenceVolume)
   {
-    typename MaskVolumeType::Pointer maskVolume = getMaskVolumeOrNull(maskFileName);
+    MaskVolumeType::Pointer maskVolume = getMaskVolumeOrNull(maskFileName);
     if (maskVolume.IsNotNull()) {
-      typename ResamplerType::Pointer resampler = ResamplerType::New();
-      typename InterpolatorType::Pointer interpolator = InterpolatorType::New();
+      ResamplerType::Pointer resampler = ResamplerType::New();
+      InterpolatorType::Pointer interpolator = InterpolatorType::New();
 
       resampler->SetOutputDirection(referenceVolume->GetDirection());
       resampler->SetOutputSpacing(referenceVolume->GetSpacing());
@@ -239,9 +231,9 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     return maskVolume;
   }
 
-  typename VectorVolumeType::Pointer getVectorVolume(const std::string& volumeFileName)
+  VectorVolumeType::Pointer getVectorVolume(const std::string& volumeFileName)
   {
-    typename VectorVolumeReaderType::Pointer multiVolumeReader = VectorVolumeReaderType::New();
+    VectorVolumeReaderType::Pointer multiVolumeReader = VectorVolumeReaderType::New();
     multiVolumeReader->SetFileName(volumeFileName.c_str());
     multiVolumeReader->Update();
     return multiVolumeReader->GetOutput();
@@ -256,14 +248,14 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     return batEstimator;
   }
 
-  void writeVectorVolumeIfFileNameValid(std::string fileName, const typename FloatVectorVolumeType::Pointer outVolume, const typename VectorVolumeType::Pointer referenceVolume)
+  void writeVectorVolumeIfFileNameValid(std::string fileName, const FloatVectorVolumeType::Pointer outVolume, const VectorVolumeType::Pointer referenceVolume)
   {
     if (!fileName.empty())
     {
       // this line is needed to make Slicer recognize this as a VectorVolume and not a MultiVolume
       outVolume->SetMetaDataDictionary(referenceVolume->GetMetaDataDictionary());
 
-      typename VectorVolumeWriterType::Pointer multiVolumeWriter = VectorVolumeWriterType::New();
+      VectorVolumeWriterType::Pointer multiVolumeWriter = VectorVolumeWriterType::New();
       multiVolumeWriter->SetFileName(fileName.c_str());
       multiVolumeWriter->SetInput(outVolume);
       multiVolumeWriter->SetUseCompression(1);
@@ -271,11 +263,11 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     }
   }
 
-  void writeVolumeIfFileNameValid(std::string fileName, const typename OutputVolumeType::Pointer outVolume)
+  void writeVolumeIfFileNameValid(std::string fileName, const OutputVolumeType::Pointer outVolume)
   {
     if (!fileName.empty())
     {
-      typename OutputVolumeWriterType::Pointer volumeWriter = OutputVolumeWriterType::New();
+      OutputVolumeWriterType::Pointer volumeWriter = OutputVolumeWriterType::New();
       volumeWriter->SetInput(outVolume);
       volumeWriter->SetFileName(fileName.c_str());
       volumeWriter->SetUseCompression(1);
@@ -284,13 +276,10 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
   }
 
 
-  int DoIt(int argc, char * argv[])
+  int DoIt()
   {
-    // Command line processing
-    PARSE_ARGS;
-
-    typename VectorVolumeType::Pointer inputVectorVolume = getVectorVolume(InputFourDImageFileName);
-    std::unique_ptr<BolusArrivalTime::BolusArrivalTimeEstimator> batEstimator = getBatEstimator(BATCalculationMode, ConstantBAT);
+    VectorVolumeType::Pointer inputVectorVolume = getVectorVolume(cfg.InputFourDImageFileName);
+    std::unique_ptr<BolusArrivalTime::BolusArrivalTimeEstimator> batEstimator = getBatEstimator(cfg.BATCalculationMode, cfg.ConstantBAT);
 
     std::vector<float> Timing;
     float FAValue = 0.0;
@@ -304,25 +293,25 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     catch (itk::ExceptionObject &exc)
     {
       itkGenericExceptionMacro(<< exc.GetDescription()
-        << " Image " << InputFourDImageFileName.c_str()
+        << " Image " << cfg.InputFourDImageFileName.c_str()
         << " does not contain sufficient attributes to support algorithms.");
     }
 
     //Read masks
-    typename MaskVolumeType::Pointer aifMaskVolume = getMaskVolumeOrNull(AIFMaskFileName);
-    typename MaskVolumeType::Pointer T1MapVolume = getMaskVolumeOrNull(T1MapFileName);
-    typename MaskVolumeType::Pointer roiMaskVolume = getResampledMaskVolumeOrNull(ROIMaskFileName, inputVectorVolume);
+    MaskVolumeType::Pointer aifMaskVolume = getMaskVolumeOrNull(cfg.AIFMaskFileName);
+    MaskVolumeType::Pointer T1MapVolume = getMaskVolumeOrNull(cfg.T1MapFileName);
+    MaskVolumeType::Pointer roiMaskVolume = getResampledMaskVolumeOrNull(cfg.ROIMaskFileName, inputVectorVolume);
 
     //Read prescribed aif
     bool usingPrescribedAIF = false;
     std::vector<float> prescribedAIFTiming;
     std::vector<float> prescribedAIF;
-    if (PrescribedAIFFileName != "")
+    if (cfg.PrescribedAIFFileName != "")
     {
-      usingPrescribedAIF = GetPrescribedAIF(PrescribedAIFFileName, prescribedAIFTiming, prescribedAIF);
+      usingPrescribedAIF = GetPrescribedAIF(cfg.PrescribedAIFFileName, prescribedAIFTiming, prescribedAIF);
     }
 
-    if (AIFMaskFileName == "" && !usingPrescribedAIF && !UsePopulationAIF)
+    if (cfg.AIFMaskFileName == "" && !usingPrescribedAIF && !cfg.UsePopulationAIF)
     {
       itkGenericExceptionMacro(<< "Either a mask localizing the region over which to "
         << "calculate the arterial input function or a prescribed "
@@ -333,45 +322,45 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
 
     //Convert to concentration values
     typedef itk::SignalIntensityToConcentrationImageFilter<VectorVolumeType, MaskVolumeType, FloatVectorVolumeType> ConvertFilterType;
-    typename ConvertFilterType::Pointer signalToConcentrationsConverter = ConvertFilterType::New();
+    ConvertFilterType::Pointer signalToConcentrationsConverter = ConvertFilterType::New();
     signalToConcentrationsConverter->SetInput(inputVectorVolume);
 
-    if (!usingPrescribedAIF && !UsePopulationAIF)
+    if (!usingPrescribedAIF && !cfg.UsePopulationAIF)
     {
       signalToConcentrationsConverter->SetAIFMask(aifMaskVolume);
     }
 
-    if (ROIMaskFileName != "")
+    if (cfg.ROIMaskFileName != "")
     {
       signalToConcentrationsConverter->SetROIMask(roiMaskVolume);
     }
 
-    signalToConcentrationsConverter->SetT1PreBlood(T1PreBloodValue);
-    signalToConcentrationsConverter->SetT1PreTissue(T1PreTissueValue);
+    signalToConcentrationsConverter->SetT1PreBlood(cfg.T1PreBloodValue);
+    signalToConcentrationsConverter->SetT1PreTissue(cfg.T1PreTissueValue);
     signalToConcentrationsConverter->SetTR(TRValue);
     signalToConcentrationsConverter->SetFA(FAValue);
     signalToConcentrationsConverter->SetBatEstimator(batEstimator.get());
-    signalToConcentrationsConverter->SetRGD_relaxivity(RelaxivityValue);
-    signalToConcentrationsConverter->SetS0GradThresh(S0GradValue);
+    signalToConcentrationsConverter->SetRGD_relaxivity(cfg.RelaxivityValue);
+    signalToConcentrationsConverter->SetS0GradThresh(cfg.S0GradValue);
 
-    if (T1MapFileName != "")
+    if (cfg.T1MapFileName != "")
     {
       signalToConcentrationsConverter->SetT1Map(T1MapVolume);
     }
 
-    itk::PluginFilterWatcher watchConverter(signalToConcentrationsConverter, "Concentrations", CLPProcessInformation, 1.0 / 20.0, 0.0);
+    itk::PluginFilterWatcher watchConverter(signalToConcentrationsConverter, "Concentrations", cfg.CLPProcessInformation, 1.0 / 20.0, 0.0);
     signalToConcentrationsConverter->Update();
 
     //Calculate parameters
     typedef itk::ConcentrationToQuantitativeImageFilter<FloatVectorVolumeType, MaskVolumeType, OutputVolumeType> QuantifierType;
-    typename QuantifierType::Pointer concentrationsToQuantitativeImageFilter = QuantifierType::New();
+    QuantifierType::Pointer concentrationsToQuantitativeImageFilter = QuantifierType::New();
     concentrationsToQuantitativeImageFilter->SetInput(signalToConcentrationsConverter->GetOutput());
     if (usingPrescribedAIF)
     {
       concentrationsToQuantitativeImageFilter->SetPrescribedAIF(prescribedAIFTiming, prescribedAIF);
       concentrationsToQuantitativeImageFilter->UsePrescribedAIFOn();
     }
-    else if (UsePopulationAIF)
+    else if (cfg.UsePopulationAIF)
     {
       concentrationsToQuantitativeImageFilter->UsePopulationAIFOn();
       concentrationsToQuantitativeImageFilter->SetAIFMask(aifMaskVolume);
@@ -381,21 +370,21 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
       concentrationsToQuantitativeImageFilter->SetAIFMask(aifMaskVolume);
     }
 
-    concentrationsToQuantitativeImageFilter->SetAUCTimeInterval(AUCTimeInterval);
+    concentrationsToQuantitativeImageFilter->SetAUCTimeInterval(cfg.AUCTimeInterval);
     concentrationsToQuantitativeImageFilter->SetTiming(Timing);
-    concentrationsToQuantitativeImageFilter->SetfTol(FTolerance);
-    concentrationsToQuantitativeImageFilter->SetgTol(GTolerance);
-    concentrationsToQuantitativeImageFilter->SetxTol(XTolerance);
-    concentrationsToQuantitativeImageFilter->Setepsilon(Epsilon);
-    concentrationsToQuantitativeImageFilter->SetmaxIter(MaxIter);
-    concentrationsToQuantitativeImageFilter->Sethematocrit(Hematocrit);
+    concentrationsToQuantitativeImageFilter->SetfTol(cfg.FTolerance);
+    concentrationsToQuantitativeImageFilter->SetgTol(cfg.GTolerance);
+    concentrationsToQuantitativeImageFilter->SetxTol(cfg.XTolerance);
+    concentrationsToQuantitativeImageFilter->Setepsilon(cfg.Epsilon);
+    concentrationsToQuantitativeImageFilter->SetmaxIter(cfg.MaxIter);
+    concentrationsToQuantitativeImageFilter->Sethematocrit(cfg.Hematocrit);
     concentrationsToQuantitativeImageFilter->SetBatEstimator(batEstimator.get());
-    if (ROIMaskFileName != "")
+    if (cfg.ROIMaskFileName != "")
     {
       concentrationsToQuantitativeImageFilter->SetROIMask(roiMaskVolume);
     }
 
-    if (ComputeFpv)
+    if (cfg.ComputeFpv)
     {
       concentrationsToQuantitativeImageFilter->SetModelType(itk::LMCostFunction::TOFTS_3_PARAMETER);
     }
@@ -404,24 +393,24 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
       concentrationsToQuantitativeImageFilter->SetModelType(itk::LMCostFunction::TOFTS_2_PARAMETER);
     }
 
-    itk::PluginFilterWatcher watchQuantifier(concentrationsToQuantitativeImageFilter, "Quantifying", CLPProcessInformation, 19.0 / 20.0, 1.0 / 20.0);
+    itk::PluginFilterWatcher watchQuantifier(concentrationsToQuantitativeImageFilter, "Quantifying", cfg.CLPProcessInformation, 19.0 / 20.0, 1.0 / 20.0);
     concentrationsToQuantitativeImageFilter->Update();
 
     ///////////////////////////////////// OUTPUT ////////////////////
 
-    writeVectorVolumeIfFileNameValid(OutputConcentrationsImageFileName, signalToConcentrationsConverter->GetOutput(), inputVectorVolume);
-    writeVectorVolumeIfFileNameValid(OutputFittedDataImageFileName, concentrationsToQuantitativeImageFilter->GetFittedDataOutput(), inputVectorVolume);
+    writeVectorVolumeIfFileNameValid(cfg.OutputConcentrationsImageFileName, signalToConcentrationsConverter->GetOutput(), inputVectorVolume);
+    writeVectorVolumeIfFileNameValid(cfg.OutputFittedDataImageFileName, concentrationsToQuantitativeImageFilter->GetFittedDataOutput(), inputVectorVolume);
 
-    writeVolumeIfFileNameValid(OutputKtransFileName, concentrationsToQuantitativeImageFilter->GetKTransOutput());
-    writeVolumeIfFileNameValid(OutputVeFileName, concentrationsToQuantitativeImageFilter->GetVEOutput());
-    writeVolumeIfFileNameValid(OutputMaxSlopeFileName, concentrationsToQuantitativeImageFilter->GetMaxSlopeOutput());
-    writeVolumeIfFileNameValid(OutputAUCFileName, concentrationsToQuantitativeImageFilter->GetAUCOutput());
-    writeVolumeIfFileNameValid(OutputRSquaredFileName, concentrationsToQuantitativeImageFilter->GetRSquaredOutput());
-    writeVolumeIfFileNameValid(OutputBolusArrivalTimeImageFileName, concentrationsToQuantitativeImageFilter->GetBATOutput());
-    writeVolumeIfFileNameValid(OutputOptimizerDiagnosticsImageFileName, concentrationsToQuantitativeImageFilter->GetOptimizerDiagnosticsOutput());
+    writeVolumeIfFileNameValid(cfg.OutputKtransFileName, concentrationsToQuantitativeImageFilter->GetKTransOutput());
+    writeVolumeIfFileNameValid(cfg.OutputVeFileName, concentrationsToQuantitativeImageFilter->GetVEOutput());
+    writeVolumeIfFileNameValid(cfg.OutputMaxSlopeFileName, concentrationsToQuantitativeImageFilter->GetMaxSlopeOutput());
+    writeVolumeIfFileNameValid(cfg.OutputAUCFileName, concentrationsToQuantitativeImageFilter->GetAUCOutput());
+    writeVolumeIfFileNameValid(cfg.OutputRSquaredFileName, concentrationsToQuantitativeImageFilter->GetRSquaredOutput());
+    writeVolumeIfFileNameValid(cfg.OutputBolusArrivalTimeImageFileName, concentrationsToQuantitativeImageFilter->GetBATOutput());
+    writeVolumeIfFileNameValid(cfg.OutputOptimizerDiagnosticsImageFileName, concentrationsToQuantitativeImageFilter->GetOptimizerDiagnosticsOutput());
     
-    if (ComputeFpv) {
-      writeVolumeIfFileNameValid(OutputFpvFileName, concentrationsToQuantitativeImageFilter->GetFPVOutput());
+    if (cfg.ComputeFpv) {
+      writeVolumeIfFileNameValid(cfg.OutputFpvFileName, concentrationsToQuantitativeImageFilter->GetFPVOutput());
     }
 
     return EXIT_SUCCESS;
