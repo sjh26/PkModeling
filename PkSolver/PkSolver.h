@@ -297,18 +297,6 @@ namespace itk
     itk::FunctionEvaluationIterationEvent m_FunctionEvent;
     itk::GradientEvaluationIterationEvent m_GradientEvent;
   };
-  bool pk_solver(int signalSize, const float* timeAxis,
-    const float* PixelConcentrationCurve,
-    const float* BloodConcentrationCurve,
-    float& Ktrans, float& Ve, float& Fpv,
-    float fTol = 1e-4f,
-    float gTol = 1e-4f,
-    float xTol = 1e-5f,
-    float epsilon = 1e-9f,
-    int maxIter = 200,
-    float hematocrit = 0.4f,
-    int modelType = itk::LMCostFunction::TOFTS_2_PARAMETER,
-    const BolusArrivalTime::BolusArrivalTimeEstimator* batEstimator = NULL);
 
   // returns diagnostic error code from the VNL optimizer,
   //  as defined by OptimizerDiagnosticCodes, and masked to indicate
