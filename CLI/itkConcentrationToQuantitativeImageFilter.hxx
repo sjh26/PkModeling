@@ -235,7 +235,7 @@ namespace itk
         {
           // Case (2) from above)
           // find the prescribed times that straddle the current time to interpolate
-          while (*ptitnext < *tit && ptitnext != m_PrescribedAIFTiming.end())
+          while (ptitnext != m_PrescribedAIFTiming.end() && *ptitnext < *tit)
           {
             ++ptit;
             ++ptitnext;
