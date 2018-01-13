@@ -47,6 +47,10 @@ public:
   typedef itk::ResampleImageFilter<MaskVolumeType, MaskVolumeType> ResamplerType;
   typedef itk::NearestNeighborInterpolateImageFunction<MaskVolumeType> InterpolatorType;
 
+  typedef itk::SignalIntensityToConcentrationImageFilter<VectorVolumeType, MaskVolumeType, FloatVectorVolumeType> ConvertFilterType;
+  typedef itk::ConcentrationToQuantitativeImageFilter<FloatVectorVolumeType, MaskVolumeType, OutputVolumeType> QuantifierType;
+
+
   PkModeling(Configuration config) : cfg(config) {}
   virtual ~PkModeling() {}
 
@@ -275,6 +279,26 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     }
   }
 
+  void saveRequestedOutputs(const ConvertFilterType::Pointer signalToConcentrationsConverter, 
+                            const QuantifierType::Pointer concentrationsToQuantitativeImageFilter,
+                            const VectorVolumeType::Pointer inputVectorVolume)
+  {
+    writeVectorVolumeIfFileNameValid(cfg.OutputConcentrationsImageFileName, signalToConcentrationsConverter->GetOutput(), inputVectorVolume);
+    writeVectorVolumeIfFileNameValid(cfg.OutputFittedDataImageFileName, concentrationsToQuantitativeImageFilter->GetFittedDataOutput(), inputVectorVolume);
+
+    writeVolumeIfFileNameValid(cfg.OutputKtransFileName, concentrationsToQuantitativeImageFilter->GetKTransOutput());
+    writeVolumeIfFileNameValid(cfg.OutputVeFileName, concentrationsToQuantitativeImageFilter->GetVEOutput());
+    writeVolumeIfFileNameValid(cfg.OutputMaxSlopeFileName, concentrationsToQuantitativeImageFilter->GetMaxSlopeOutput());
+    writeVolumeIfFileNameValid(cfg.OutputAUCFileName, concentrationsToQuantitativeImageFilter->GetAUCOutput());
+    writeVolumeIfFileNameValid(cfg.OutputRSquaredFileName, concentrationsToQuantitativeImageFilter->GetRSquaredOutput());
+    writeVolumeIfFileNameValid(cfg.OutputBolusArrivalTimeImageFileName, concentrationsToQuantitativeImageFilter->GetBATOutput());
+    writeVolumeIfFileNameValid(cfg.OutputOptimizerDiagnosticsImageFileName, concentrationsToQuantitativeImageFilter->GetOptimizerDiagnosticsOutput());
+
+    if (cfg.ComputeFpv) {
+      writeVolumeIfFileNameValid(cfg.OutputFpvFileName, concentrationsToQuantitativeImageFilter->GetFPVOutput());
+    }
+  }
+
 
   int execute()
   {
@@ -321,7 +345,6 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     /////////////////////////////// PROCESSING /////////////////////
 
     //Convert to concentration values
-    typedef itk::SignalIntensityToConcentrationImageFilter<VectorVolumeType, MaskVolumeType, FloatVectorVolumeType> ConvertFilterType;
     ConvertFilterType::Pointer signalToConcentrationsConverter = ConvertFilterType::New();
     signalToConcentrationsConverter->SetInput(inputVectorVolume);
 
@@ -352,7 +375,6 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     signalToConcentrationsConverter->Update();
 
     //Calculate parameters
-    typedef itk::ConcentrationToQuantitativeImageFilter<FloatVectorVolumeType, MaskVolumeType, OutputVolumeType> QuantifierType;
     QuantifierType::Pointer concentrationsToQuantitativeImageFilter = QuantifierType::New();
     concentrationsToQuantitativeImageFilter->SetInput(signalToConcentrationsConverter->GetOutput());
     if (usingPrescribedAIF)
@@ -398,20 +420,7 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
 
     ///////////////////////////////////// OUTPUT ////////////////////
 
-    writeVectorVolumeIfFileNameValid(cfg.OutputConcentrationsImageFileName, signalToConcentrationsConverter->GetOutput(), inputVectorVolume);
-    writeVectorVolumeIfFileNameValid(cfg.OutputFittedDataImageFileName, concentrationsToQuantitativeImageFilter->GetFittedDataOutput(), inputVectorVolume);
-
-    writeVolumeIfFileNameValid(cfg.OutputKtransFileName, concentrationsToQuantitativeImageFilter->GetKTransOutput());
-    writeVolumeIfFileNameValid(cfg.OutputVeFileName, concentrationsToQuantitativeImageFilter->GetVEOutput());
-    writeVolumeIfFileNameValid(cfg.OutputMaxSlopeFileName, concentrationsToQuantitativeImageFilter->GetMaxSlopeOutput());
-    writeVolumeIfFileNameValid(cfg.OutputAUCFileName, concentrationsToQuantitativeImageFilter->GetAUCOutput());
-    writeVolumeIfFileNameValid(cfg.OutputRSquaredFileName, concentrationsToQuantitativeImageFilter->GetRSquaredOutput());
-    writeVolumeIfFileNameValid(cfg.OutputBolusArrivalTimeImageFileName, concentrationsToQuantitativeImageFilter->GetBATOutput());
-    writeVolumeIfFileNameValid(cfg.OutputOptimizerDiagnosticsImageFileName, concentrationsToQuantitativeImageFilter->GetOptimizerDiagnosticsOutput());
-    
-    if (cfg.ComputeFpv) {
-      writeVolumeIfFileNameValid(cfg.OutputFpvFileName, concentrationsToQuantitativeImageFilter->GetFPVOutput());
-    }
+    saveRequestedOutputs(signalToConcentrationsConverter, concentrationsToQuantitativeImageFilter, inputVectorVolume);
 
     return EXIT_SUCCESS;
   }
