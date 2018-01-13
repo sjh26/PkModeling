@@ -307,6 +307,38 @@ add_test(NAME ${testName} COMMAND ${Launcher_Command} $<TARGET_FILE:${CLP}Test>
 set_property(TEST ${testName} PROPERTY LABELS ${CLP})
 
 #-----------------------------------------------------------------------------
+# Regression Tests DROs With Fpv
+#-----------------------------------------------------------------------------
+set(testName DRO3min5secinf_AllOutputsInclFpv)
+set(tempOutDataBaseName ${TEMP}/${testName})
+set(referenceDataBaseName ${referenceDataBaseDir}${testName})
+set_compareArgs(TRUE)
+set(paramsArgs --T1Tissue 1434
+               --T1Blood 1600
+               --relaxivity 0.0037
+               --S0grad 15.0
+               --hematocrit 0.45
+               --aucTimeInterval 90
+               --fTolerance 1e-4 
+               --gTolerance 1e-4 
+               --xTolerance 1e-5 
+               --epsilon 1e-9 
+               --maxIter 200
+               --computeFpv)
+set_outputParamsArgs(TRUE)
+add_test(NAME ${testName} COMMAND ${Launcher_Command} $<TARGET_FILE:${CLP}Test>
+  ${compareArgs}
+  ModuleEntryPoint
+    ${paramsArgs}
+    ${outputParamsArgs}
+    --roiMask ${inputDataBaseName}-ROI.nrrd
+    --aifMask ${inputDataBaseName}-AIF.nrrd
+    ${inputDataBaseName}3min5secinf.nrrd                   
+)
+set_property(TEST ${testName} PROPERTY LABELS ${CLP})
+
+
+#-----------------------------------------------------------------------------
 # Regression Tests DROs with T1Map
 #-----------------------------------------------------------------------------
 set(testName DRO3min5secinf_AllOutputsExceptFpv_WithT1Map)
