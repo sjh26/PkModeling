@@ -27,7 +27,7 @@ int main(int argc, char * argv[])
 
   try
   {
-    pkModeling.DoIt();
+    pkModeling.execute();
   }
   catch (itk::ExceptionObject & excep)
   {

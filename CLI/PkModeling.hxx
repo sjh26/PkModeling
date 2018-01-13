@@ -276,7 +276,7 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
   }
 
 
-  int DoIt()
+  int execute()
   {
     VectorVolumeType::Pointer inputVectorVolume = getVectorVolume(cfg.InputFourDImageFileName);
     std::unique_ptr<BolusArrivalTime::BolusArrivalTimeEstimator> batEstimator = getBatEstimator(cfg.BATCalculationMode, cfg.ConstantBAT);
