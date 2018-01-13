@@ -337,8 +337,93 @@ add_test(NAME ${testName} COMMAND ${Launcher_Command} $<TARGET_FILE:${CLP}Test>
 )
 set_property(TEST ${testName} PROPERTY LABELS ${CLP})
 
+#-----------------------------------------------------------------------------
+# Regression Tests DROs with Prescribed AIF
+#-----------------------------------------------------------------------------
+set(testName DRO3min5secinf_AllOutputsExceptFpv_WithPrescribedAIF)
+set(tempOutDataBaseName ${TEMP}/${testName})
+set(referenceDataBaseName ${referenceDataBaseDir}${testName})
+set_compareArgs(FALSE)
+set(paramsArgs --T1Tissue 1434
+               --T1Blood 1600
+               --relaxivity 0.0037
+               --S0grad 15.0
+               --hematocrit 0.45
+               --aucTimeInterval 90
+               --fTolerance 1e-4 
+               --gTolerance 1e-4 
+               --xTolerance 1e-5 
+               --epsilon 1e-9 
+               --maxIter 200)
+set_outputParamsArgs(FALSE)
+add_test(NAME ${testName} COMMAND ${Launcher_Command} $<TARGET_FILE:${CLP}Test>
+  ${compareArgs}
+  ModuleEntryPoint
+    ${paramsArgs}
+    ${outputParamsArgs}
+    --roiMask ${inputDataBaseName}-ROI.nrrd
+    --prescribedAIF ${inputDataBaseName}3min5secinf_PrescribedAIF.csv
+    ${inputDataBaseName}3min5secinf.nrrd                   
+)
+set_property(TEST ${testName} PROPERTY LABELS ${CLP})
 
+#-----------------------------------------------------------------------------
+set(testName DRO3min5secinf_AllOutputsExceptFpv_WithPrescribedAIF-sparse)
+set(tempOutDataBaseName ${TEMP}/${testName})
+set(referenceDataBaseName ${referenceDataBaseDir}${testName})
+set_compareArgs(FALSE)
+set(paramsArgs --T1Tissue 1434
+               --T1Blood 1600
+               --relaxivity 0.0037
+               --S0grad 15.0
+               --hematocrit 0.45
+               --aucTimeInterval 90
+               --fTolerance 1e-4 
+               --gTolerance 1e-4 
+               --xTolerance 1e-5 
+               --epsilon 1e-9 
+               --maxIter 200)
+set_outputParamsArgs(FALSE)
+add_test(NAME ${testName} COMMAND ${Launcher_Command} $<TARGET_FILE:${CLP}Test>
+  ${compareArgs}
+  ModuleEntryPoint
+    ${paramsArgs}
+    ${outputParamsArgs}
+    --roiMask ${inputDataBaseName}-ROI.nrrd
+    --prescribedAIF ${inputDataBaseName}3min5secinf_PrescribedAIF-sparse.csv
+    ${inputDataBaseName}3min5secinf.nrrd                   
+)
+set_property(TEST ${testName} PROPERTY LABELS ${CLP})
 
+#-----------------------------------------------------------------------------
+# Regression Tests DROs with Population AIF
+#-----------------------------------------------------------------------------
+set(testName DRO3min5secinf_AllOutputsExceptFpv_WithPopulationAIF)
+set(tempOutDataBaseName ${TEMP}/${testName})
+set(referenceDataBaseName ${referenceDataBaseDir}${testName})
+set_compareArgs(FALSE)
+set(paramsArgs --T1Tissue 1434
+               --T1Blood 1600
+               --usePopAif
+               --relaxivity 0.0037
+               --S0grad 15.0
+               --hematocrit 0.45
+               --aucTimeInterval 90
+               --fTolerance 1e-4 
+               --gTolerance 1e-4 
+               --xTolerance 1e-5 
+               --epsilon 1e-9 
+               --maxIter 200)
+set_outputParamsArgs(FALSE)
+add_test(NAME ${testName} COMMAND ${Launcher_Command} $<TARGET_FILE:${CLP}Test>
+  ${compareArgs}
+  ModuleEntryPoint
+    ${paramsArgs}
+    ${outputParamsArgs}
+    --roiMask ${inputDataBaseName}-ROI.nrrd
+    ${inputDataBaseName}3min5secinf.nrrd                   
+)
+set_property(TEST ${testName} PROPERTY LABELS ${CLP})
 
 
 
