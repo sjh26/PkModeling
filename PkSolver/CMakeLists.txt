@@ -15,10 +15,10 @@ endif()
 set(LIBRARY_SRCS
   ${LIBRARY_NAME}.h
   ${LIBRARY_NAME}.cxx
-  BolusArrivalTimeEstimator.h
-  BolusArrivalTimeEstimatorConstant.h
-  BolusArrivalTimeEstimatorPeakGradient.h
-  BolusArrivalTimeEstimatorPeakGradient.cxx
+  BAT/BolusArrivalTimeEstimator.h
+  BAT/BolusArrivalTimeEstimatorConstant.h
+  BAT/BolusArrivalTimeEstimatorPeakGradient.h
+  BAT/BolusArrivalTimeEstimatorPeakGradient.cxx
   SignalComputationUtils.h
   SignalComputationUtils.cxx
   )

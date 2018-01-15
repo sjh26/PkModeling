@@ -21,7 +21,7 @@
 #include "itkArray.h"
 #include <string>
 #include <exception>
-#include "BolusArrivalTimeEstimator.h"
+#include "BAT/BolusArrivalTimeEstimator.h"
 
 
 // work around compile error on Win

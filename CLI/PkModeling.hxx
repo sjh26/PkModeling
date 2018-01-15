@@ -16,9 +16,9 @@
 #include "itkSignalIntensityToConcentrationImageFilter.h"
 #include "itkConcentrationToQuantitativeImageFilter.h"
 
-#include "BolusArrivalTimeEstimator.h"
-#include "BolusArrivalTimeEstimatorConstant.h"
-#include "BolusArrivalTimeEstimatorPeakGradient.h"
+#include "BAT/BolusArrivalTimeEstimator.h"
+#include "BAT/BolusArrivalTimeEstimatorConstant.h"
+#include "BAT/BolusArrivalTimeEstimatorPeakGradient.h"
 
 #include <sstream>
 #include <fstream>
