@@ -13,6 +13,9 @@
 
 #include "itkConcentrationToQuantitativeImageFilter.h"
 
+#include "AIF/ArterialInputFunctionAverageUnderMask.h" //TODO Replace by Abstract Interface to AIF
+#include "AIF/ArterialInputFunctionPopulation.h" //TODO Replace by Abstract Interface to AIF
+
 
 namespace itk
 {
@@ -67,19 +70,13 @@ namespace itk
   template< class TInputImage, class TMaskImage, class TOutputImage >
   void
     ConcentrationToQuantitativeImageFilter< TInputImage, TMaskImage, TOutputImage >
-    ::SetPrescribedAIF(const std::vector<float>& timing, const std::vector<float>& aif)
+    ::SetAIF(const ArterialInputFunction* aif)
   {
-    if (aif.size() < 2)
+    if (aif->getAIF().size() < 2)
     {
       itkExceptionMacro(<< "Prescribed AIF must contain at least two time points");
     }
-    if (aif.size() != timing.size())
-    {
-      itkExceptionMacro("Timing vector and concentration vector for AIF must be the same size.");
-    }
-
-    m_PrescribedAIF = aif;
-    m_PrescribedAIFTiming = timing;
+    m_aif = aif;
   }
 
   // Set 3D AIF mask as second input
@@ -208,65 +205,17 @@ namespace itk
     // calculate AIF
     if (m_UsePrescribedAIF)
     {
-      // resample the prescribed AIF vector to be at the specifed
-      // m_Timing points and then assign to m_AIF
-      m_AIF = std::vector<float>(timeSize);
-
-      std::vector<float>::iterator ait = m_AIF.begin();
-      std::vector<float>::iterator tit = m_Timing.begin();
-
-      std::vector<float>::iterator pait = m_PrescribedAIF.begin();
-      std::vector<float>::iterator ptit = m_PrescribedAIFTiming.begin();
-
-      std::vector<float>::iterator paitnext = pait;
-      paitnext++;
-      std::vector<float>::iterator ptitnext = ptit;
-      ptitnext++;
-
-      for (; tit != m_Timing.end(); ++tit, ++ait)
-      {
-        // Three cases
-        // (1) extrapolate the aif on the low end of the range of prescribed timings
-        // (2) interpolate the aif
-        // (3) extrapolate the aif on the high end of the range of prescribed timings
-        //
-        // Case (1) is handled implictly by the initialization and conditionals.
-        if (*ptit <= *tit)
-        {
-          // Case (2) from above)
-          // find the prescribed times that straddle the current time to interpolate
-          while (ptitnext != m_PrescribedAIFTiming.end() && *ptitnext < *tit)
-          {
-            ++ptit;
-            ++ptitnext;
-            ++pait;
-            ++paitnext;
-          }
-        }
-        if (ptitnext == m_PrescribedAIFTiming.end())
-        {
-          // we'll need to extrapolate (Case (3) from above)
-          ptitnext = ptit;
-          --ptit;
-          paitnext = pait;
-          --pait;
-        }
-
-        // interpolate aif;
-        float a;
-        a = *pait + ((*tit - *ptit) / (*ptitnext - *ptit)) * (*paitnext - *pait);
-        *ait = a;
-      }
+      m_AIF = m_aif->getAIF();
     }
     else if (maskVolume && !m_UsePopulationAIF)
     {
-      // calculate the AIF from the image using the data under the
-      // specified mask
-      m_AIF = this->CalculateAverageAIF(inputVectorVolume, maskVolume);
+      ArterialInputFunctionAverageUnderMask aif(inputVectorVolume, maskVolume);
+      m_AIF = aif.getAIF();
     }
     else if (m_UsePopulationAIF)
     {
-      m_AIF = this->CalculatePopulationAIF(m_Timing, 0.1);
+      ArterialInputFunctionPopulation aif(m_Timing);
+      m_AIF = aif.getAIF();
     }
     else
     {
@@ -567,254 +516,6 @@ namespace itk
       progress.CompletedPixel();
     }
   }
-
-  // Calculate a population AIF.
-  //
-  // See "Experimentally-Derived Functional Form for a Population-Averaged High-
-  // Temporal-Resolution Arterial Input Function for Dynamic Contrast-Enhanced
-  // MRI" - Parker, Robers, Macdonald, Buonaccorsi, Cheung, Buckley, Jackson,
-  // Watson, Davies, Jayson.  Magnetic Resonance in Medicine 56:993-1000 (2006)
-  template <class TInputImage, class TMaskImage, class TOutputImage>
-  std::vector<float>
-    ConcentrationToQuantitativeImageFilter<TInputImage, TMaskImage, TOutputImage>
-    ::CalculatePopulationAIF(std::vector<float> signalTime, const float bolusArrivalTimeFraction)
-  {
-
-    // Inputs
-    // ------
-    // signalTime : sequence time, presumed in units of seconds.
-    // bolusArrivalTimeFraction : fractional point between 0 and 1 when the bolus is
-    //     desired to arrive.  Choose 0.0 to have it at the very beginning,
-    //     1.0 to have it at the end.
-    //
-    // Outputs
-    // -------
-    // AIF : arterial input function as a function of time
-    std::vector<float> AIF;
-
-    // Make a high resolution timing vector as input to the AIF construction.
-    std::vector<float> aif_time(signalTime.size() * 10);
-    float final_time_point = signalTime[signalTime.size() - 1];
-    float resolution = final_time_point / (aif_time.size() - 1);
-    for (size_t j = 0; j < aif_time.size(); ++j)
-    {
-      aif_time[j] = resolution * j;
-    }
-
-    size_t bolus_arrival_time_idx = (float)aif_time.size() * bolusArrivalTimeFraction;
-
-    size_t n = aif_time.size();
-    AIF.resize(n);
-
-    size_t numTimePoints = n - bolus_arrival_time_idx;
-    std::vector<float> timeSinceBolus(numTimePoints);
-
-
-    // t=FR*[0:numTimePoints-1]/60;
-    // These time points "start" when the bolus arrives.
-    for (size_t j = 0; j < numTimePoints; ++j)
-    {
-      //timeSinceBolus[j] = FR * j / 60.0;
-      timeSinceBolus[j] = aif_time[bolus_arrival_time_idx + j] - aif_time[bolus_arrival_time_idx];
-    }
-
-    // Parker
-    // defining parameters
-    double a1(0.809);
-    double a2(0.330);
-    double T1(0.17406);
-    double T2(0.365);
-    double sigma1(0.0563);
-    double sigma2(0.132);
-    double alpha(1.050);
-    double beta(0.1685);
-    double s(38.078);
-    double tau(0.483);
-
-
-    // term0=alpha*exp(-beta*t)./(1+exp(-s*(t-tau)));
-    // Here the assumption is that time is in minutes, so must scale accordingly.
-    // see Parker.
-    std::vector<double> term0(numTimePoints);
-    for (size_t j = 0; j < numTimePoints; ++j)
-    {
-      term0[j] = alpha * exp(-beta*timeSinceBolus[j] / 60.0)
-        / (1 + exp(-s * (timeSinceBolus[j] / 60.0 - tau)));
-    }
-
-
-    // term1=[];
-    // term2=[];
-    double A1 = a1 / (sigma1 * pow((2 * M_PI), 0.5));
-
-    // B1=exp(-(t-T1).^2./(2.*sigma1^2));
-    double numerator, denominator;
-    std::vector<double> B1(numTimePoints);
-    denominator = 2.0 * pow(sigma1, 2.0);
-    for (size_t j = 0; j < numTimePoints; ++j)
-    {
-      numerator = -1 * pow(-(timeSinceBolus[j] / 60.0 - T1), 2.0);
-      B1[j] = exp(numerator / denominator);
-    }
-
-    // term1=A1.*B1;
-    std::vector<double> term1(numTimePoints);
-    for (size_t j = 0; j < numTimePoints; ++j)
-    {
-      term1[j] = A1 * B1[j];
-    }
-
-
-    // A2=a2/(sigma2*((2*pi)^0.5));
-    double A2 = a2 / (sigma2 * pow(2 * M_PI, 0.5));
-
-    //B2=exp(-(t-T2).^2./(2.*sigma2^2));
-    std::vector<double> B2(numTimePoints);
-    denominator = 2.0 * pow(sigma2, 2.0);
-    for (size_t j = 0; j < numTimePoints; ++j)
-    {
-      numerator = -1 * pow(-(timeSinceBolus[j] / 60.0 - T2), 2.0);
-      B2[j] = exp(numerator / denominator);
-    }
-
-    // term2=A2.*B2;
-    std::vector<double> term2(numTimePoints);
-    for (size_t j = 0; j < numTimePoints; ++j)
-    {
-      term2[j] = A2 * B2[j];
-    }
-
-    // aifPost=term0+term1+term2;
-    std::vector<double> aifPost(numTimePoints);
-    for (size_t j = 0; j < numTimePoints; ++j)
-    {
-      aifPost[j] = term0[j] + term1[j] + term2[j];
-    }
-
-    // Initialize values before bolus arrival.
-    for (size_t j = 0; j < bolus_arrival_time_idx; ++j)
-    {
-      AIF[j] = 0;
-    }
-
-    // Shift the data to take into account the bolus arrival time.
-    // sp=timeOfBolus+1;
-    // AIF(sp:end)=aifPost;
-    for (size_t j = bolus_arrival_time_idx; j < AIF.size(); ++j)
-    {
-      AIF[j] = aifPost[j - bolus_arrival_time_idx];
-    }
-
-    // Resample back to signal (sequence) time.
-    std::vector<float> rAIF = this->ResampleAIF(aif_time, AIF, signalTime);
-
-    return rAIF;
-
-  }
-
-
-  template <class TInputImage, class TMaskImage, class TOutputImage>
-  std::vector<float>
-    ConcentrationToQuantitativeImageFilter<TInputImage, TMaskImage, TOutputImage>
-    ::ResampleAIF(std::vector<float> t1, std::vector<float> y1, std::vector<float> t2)
-  {
-    // Resample time1, y1 to time2
-    size_t timeSize = t2.size();
-    std::vector<float> y2(timeSize);
-
-    std::vector<float>::iterator y2it = y2.begin();
-    std::vector<float>::iterator t2it = t2.begin();
-
-    std::vector<float>::iterator y1it = y1.begin();
-    std::vector<float>::iterator t1it = t1.begin();
-
-    std::vector<float>::iterator y1itnext = y1it;
-    y1itnext++;
-    std::vector<float>::iterator t1itnext = t1it;
-    t1itnext++;
-
-    for (; t2it != t2.end(); ++t2it, ++y2it)
-    {
-      // Three cases
-      // (1) extrapolate the aif on the low end of the range of prescribed timings
-      // (2) interpolate the aif
-      // (3) extrapolate the aif on the high end of the range of prescribed timings
-      //
-      // Case (1) is handled implictly by the initialization and conditionals.
-      if (*t1it <= *t2it)
-      {
-        // Case (2) from above)
-        // find the prescribed times that straddle the current time to interpolate
-        while (*t1itnext < *t2it && t1itnext != t1.end())
-        {
-          ++t1it;
-          ++t1itnext;
-          ++y1it;
-          ++y1itnext;
-        }
-      }
-      if (t1itnext == t1.end())
-      {
-        // we'll need to extrapolate (Case (3) from above)
-        t1itnext = t1it;
-        --t1it;
-        y1itnext = y1it;
-        --y1it;
-      }
-
-      // interpolate aif;
-      float a;
-      a = *y1it + ((*t2it - *t1it) / (*t1itnext - *t1it)) * (*y1itnext - *y1it);
-      *y2it = a;
-    }
-
-    return y2;
-  }
-
-
-  // Calculate average AIF according to the AIF mask
-  template <class TInputImage, class TMaskImage, class TOutputImage>
-  std::vector<float>
-    ConcentrationToQuantitativeImageFilter<TInputImage, TMaskImage, TOutputImage>
-    ::CalculateAverageAIF(const VectorVolumeType*  inputVectorVolume, const MaskVolumeType* maskVolume)
-  {
-    std::vector<float> averageAIF;
-
-    VectorVolumeConstIterType inputVectorVolumeIter(inputVectorVolume, inputVectorVolume->GetRequestedRegion());
-    MaskVolumeConstIterType  maskVolumeIter(maskVolume, maskVolume->GetRequestedRegion());
-
-    inputVectorVolumeIter.GoToBegin();
-    maskVolumeIter.GoToBegin();
-
-    VectorVoxelType vectorVoxel;
-    long            numberVoxels = 0;
-    long            numberOfSamples = inputVectorVolume->GetNumberOfComponentsPerPixel();
-    averageAIF = std::vector<float>(numberOfSamples, 0.0);
-
-    while (!inputVectorVolumeIter.IsAtEnd())
-    {
-      if (maskVolumeIter.Get() != 0) // Mask pixel with value !0 will is part of AIF
-      {
-        numberVoxels++;
-        vectorVoxel = inputVectorVolumeIter.Get();
-
-        for (long i = 0; i < numberOfSamples; i++)
-        {
-          averageAIF[i] += vectorVoxel[i];
-        }
-      }
-      ++maskVolumeIter;
-      ++inputVectorVolumeIter;
-    }
-
-    for (long i = 0; i < numberOfSamples; i++)
-    {
-      averageAIF[i] /= (double)numberVoxels;
-    }
-
-    return averageAIF;
-  }
-
 
   template <class TInputImage, class TMaskImage, class TOutputImage>
   void ConcentrationToQuantitativeImageFilter<TInputImage, TMaskImage, TOutputImage>

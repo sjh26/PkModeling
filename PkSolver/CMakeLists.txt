@@ -15,12 +15,22 @@ endif()
 set(LIBRARY_SRCS
   ${LIBRARY_NAME}.h
   ${LIBRARY_NAME}.cxx
+  AIF/ArterialInputFunction.h
+  AIF/ArterialInputFunctionAverageUnderMask.h
+  AIF/ArterialInputFunctionAverageUnderMask.cxx
+  AIF/ArterialInputFunctionPopulation.h
+  AIF/ArterialInputFunctionPopulation.cxx
+  AIF/ArterialInputFunctionPrescribed.h
+  AIF/ArterialInputFunctionPrescribed.cxx
   BAT/BolusArrivalTimeEstimator.h
   BAT/BolusArrivalTimeEstimatorConstant.h
   BAT/BolusArrivalTimeEstimatorPeakGradient.h
   BAT/BolusArrivalTimeEstimatorPeakGradient.cxx
+  Exceptions.h
   SignalComputationUtils.h
   SignalComputationUtils.cxx
+  StringUtils.h
+  StringUtils.cxx
   )
 
 include_directories(${${LIBRARY_NAME}_INCLUDE_DIRS})

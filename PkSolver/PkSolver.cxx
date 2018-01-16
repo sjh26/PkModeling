@@ -23,7 +23,7 @@
 
 namespace itk
 {
-  using namespace PkSolver;
+  using namespace SignalUtils;
   //
   // Support routines/classes used internally in the PkSolver
   //

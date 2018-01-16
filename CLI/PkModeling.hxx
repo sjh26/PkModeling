@@ -16,6 +16,8 @@
 #include "itkSignalIntensityToConcentrationImageFilter.h"
 #include "itkConcentrationToQuantitativeImageFilter.h"
 
+#include "AIF/ArterialInputFunctionPrescribed.h"
+
 #include "BAT/BolusArrivalTimeEstimator.h"
 #include "BAT/BolusArrivalTimeEstimatorConstant.h"
 #include "BAT/BolusArrivalTimeEstimatorPeakGradient.h"
@@ -23,6 +25,7 @@
 #include <sstream>
 #include <fstream>
 #include <memory>
+
 
 
 class PkModeling {
@@ -129,77 +132,6 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     return triggerTimes;
   }
 
-
-  // Read an AIF from a CSV style file.  Columns are timing and concentration.
-  bool GetPrescribedAIF(const std::string& fileName, std::vector<float>& timing, std::vector<float>& aif)
-  {
-    timing.clear();
-    aif.clear();
-
-    std::string line;
-    std::ifstream csv;
-    csv.open(fileName.c_str());
-    if (csv.fail())
-    {
-      std::cout << "Cannot open file " << fileName << std::endl;
-      return false;
-    }
-
-    while (!csv.eof())
-    {
-      getline(csv, line);
-
-      if (line[0] == '#')
-      {
-        continue;
-      }
-
-      std::vector<std::string> svalues;
-      splitString(line, ",", svalues);  /// from PkModelingCLP.h
-
-      if (svalues.size() < 2)
-      {
-        // not enough values on the line
-        continue;
-      }
-
-      // only keep the time and concentration value
-      std::stringstream tstream;
-      float time = -1.0, value = -1.0;
-
-      tstream << svalues[0];
-      tstream >> time;
-      if (tstream.fail())
-      {
-        // not a float, probably the column labels, skip the row
-        continue;
-      }
-      tstream.str("");
-      tstream.clear(); // need to clear the flags since at eof of the stream
-
-      tstream << svalues[1];
-      tstream >> value;
-      if (tstream.fail())
-      {
-        // not a float, could be column labels, skip the row
-        continue;
-      }
-      tstream.str("");
-      tstream.clear(); // need to clear the flags since at eof of the stream
-
-      timing.push_back(time);
-      aif.push_back(value);
-    }
-
-    csv.close();
-
-    if (timing.size() > 0)
-    {
-      return true;
-    }
-
-    return false;
-  }
 
   MaskVolumeType::Pointer getMaskVolumeOrNull(const std::string& maskFileName)
   {
@@ -328,11 +260,15 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
 
     //Read prescribed aif
     bool usingPrescribedAIF = false;
-    std::vector<float> prescribedAIFTiming;
-    std::vector<float> prescribedAIF;
+    std::unique_ptr<ArterialInputFunction> aif;
     if (cfg.PrescribedAIFFileName != "")
     {
-      usingPrescribedAIF = GetPrescribedAIF(cfg.PrescribedAIFFileName, prescribedAIFTiming, prescribedAIF);
+      try {
+        aif.reset(new ArterialInputFunctionPrescribed(cfg.PrescribedAIFFileName, Timing));
+        usingPrescribedAIF = true;
+      }
+      catch (...) 
+      {}
     }
 
     if (cfg.AIFMaskFileName == "" && !usingPrescribedAIF && !cfg.UsePopulationAIF)
@@ -379,13 +315,12 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     concentrationsToQuantitativeImageFilter->SetInput(signalToConcentrationsConverter->GetOutput());
     if (usingPrescribedAIF)
     {
-      concentrationsToQuantitativeImageFilter->SetPrescribedAIF(prescribedAIFTiming, prescribedAIF);
+      concentrationsToQuantitativeImageFilter->SetAIF(aif.get());
       concentrationsToQuantitativeImageFilter->UsePrescribedAIFOn();
     }
     else if (cfg.UsePopulationAIF)
     {
       concentrationsToQuantitativeImageFilter->UsePopulationAIFOn();
-      concentrationsToQuantitativeImageFilter->SetAIFMask(aifMaskVolume);
     }
     else
     {
