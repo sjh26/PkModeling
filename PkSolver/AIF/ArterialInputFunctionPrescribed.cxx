@@ -15,9 +15,14 @@ ArterialInputFunctionPrescribed::ArterialInputFunctionPrescribed(const std::stri
   m_aif = loadResampledAIF();
 }
 
-std::vector<float> ArterialInputFunctionPrescribed::getAIF() const
+std::vector<float> ArterialInputFunctionPrescribed::getSignalValues() const
 {
   return m_aif;
+}
+
+unsigned int ArterialInputFunctionPrescribed::getSignalSize() const
+{
+  return m_aif.size();
 }
 
 std::vector<float> ArterialInputFunctionPrescribed::loadResampledAIF() const

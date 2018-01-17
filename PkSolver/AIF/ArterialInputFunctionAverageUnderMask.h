@@ -18,7 +18,8 @@ public:
 
   virtual ~ArterialInputFunctionAverageUnderMask() {}
 
-  virtual std::vector<float> getAIF() const;
+  virtual std::vector<float> getSignalValues() const;
+  virtual unsigned int getSignalSize() const;
 
 private:
   typedef itk::ImageRegionConstIterator<VectorVolume> VectorVolumeConstIterator;

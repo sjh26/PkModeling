@@ -10,7 +10,8 @@ public:
   
   virtual ~ArterialInputFunction() {}
 
-  virtual std::vector<float> getAIF() const = 0;
+  virtual std::vector<float> getSignalValues() const = 0;
+  virtual unsigned int getSignalSize() const = 0;
 };
 
 #endif

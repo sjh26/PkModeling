@@ -3,14 +3,20 @@
 
 #include "ArterialInputFunction.h"
 
+
 class ArterialInputFunctionPrescribed : public ArterialInputFunction
 {
 public:
+  //! Creates an AIF from a CSV file, columns should be
+  //! SignalTime,SignalValue
+  //! Loaded AIF is resampled to provided referenceTime.
+  //! Throws Exceptions if errors on loading.
   ArterialInputFunctionPrescribed(const std::string& aifFileName, const std::vector<float>& referenceTime);
 
   virtual ~ArterialInputFunctionPrescribed() {}
 
-  virtual std::vector<float> getAIF() const;
+  virtual std::vector<float> getSignalValues() const;
+  virtual unsigned int getSignalSize() const;
 
 private:
   std::vector<float> loadResampledAIF() const;

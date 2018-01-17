@@ -21,7 +21,8 @@ public:
 
   virtual ~ArterialInputFunctionPopulation() {}
 
-  virtual std::vector<float> getAIF() const;
+  virtual std::vector<float> getSignalValues() const;
+  virtual unsigned int getSignalSize() const;
 
 private:
   std::vector<float> computeAIF() const;

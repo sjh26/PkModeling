@@ -72,7 +72,7 @@ namespace itk
     ConcentrationToQuantitativeImageFilter< TInputImage, TMaskImage, TOutputImage >
     ::SetAIF(const ArterialInputFunction* aif)
   {
-    if (aif->getAIF().size() < 2)
+    if (aif->getSignalSize() < 2)
     {
       itkExceptionMacro(<< "Prescribed AIF must contain at least two time points");
     }
@@ -205,17 +205,17 @@ namespace itk
     // calculate AIF
     if (m_UsePrescribedAIF)
     {
-      m_AIF = m_aif->getAIF();
+      m_AIF = m_aif->getSignalValues();
     }
     else if (maskVolume && !m_UsePopulationAIF)
     {
       ArterialInputFunctionAverageUnderMask aif(inputVectorVolume, maskVolume);
-      m_AIF = aif.getAIF();
+      m_AIF = aif.getSignalValues();
     }
     else if (m_UsePopulationAIF)
     {
       ArterialInputFunctionPopulation aif(m_Timing);
-      m_AIF = aif.getAIF();
+      m_AIF = aif.getSignalValues();
     }
     else
     {

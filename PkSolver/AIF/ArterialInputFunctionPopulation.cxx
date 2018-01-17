@@ -13,9 +13,14 @@ ArterialInputFunctionPopulation::ArterialInputFunctionPopulation(const std::vect
   m_aif = computeAIF();
 }
 
-std::vector<float> ArterialInputFunctionPopulation::getAIF() const
+std::vector<float> ArterialInputFunctionPopulation::getSignalValues() const
 {
   return m_aif;
+}
+
+unsigned int ArterialInputFunctionPopulation::getSignalSize() const
+{
+  return m_aif.size();
 }
 
 std::vector<float> ArterialInputFunctionPopulation::computeAIF() const

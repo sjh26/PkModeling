@@ -8,9 +8,14 @@ ArterialInputFunctionAverageUnderMask::ArterialInputFunctionAverageUnderMask(con
   m_aif = computeAIF();
 }
 
-std::vector<float> ArterialInputFunctionAverageUnderMask::getAIF() const
+std::vector<float> ArterialInputFunctionAverageUnderMask::getSignalValues() const
 {
   return m_aif;
+}
+
+unsigned int ArterialInputFunctionAverageUnderMask::getSignalSize() const
+{
+  return m_aif.size();
 }
 
 std::vector<float> ArterialInputFunctionAverageUnderMask::computeAIF() const
