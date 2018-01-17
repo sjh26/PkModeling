@@ -26,6 +26,8 @@ set(LIBRARY_SRCS
   BAT/BolusArrivalTimeEstimatorConstant.h
   BAT/BolusArrivalTimeEstimatorPeakGradient.h
   BAT/BolusArrivalTimeEstimatorPeakGradient.cxx
+  IO/CSVReader.h
+  IO/CSVReader.cxx
   Exceptions.h
   SignalComputationUtils.h
   SignalComputationUtils.cxx

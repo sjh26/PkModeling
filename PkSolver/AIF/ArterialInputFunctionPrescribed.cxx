@@ -1,10 +1,10 @@
 #include "ArterialInputFunctionPrescribed.h"
 
 #include <sstream>
-#include <fstream>
 #include "StringUtils.h"
 #include "Exceptions.h"
 #include "SignalComputationUtils.h"
+#include "IO/CSVReader.h"
 
 
 ArterialInputFunctionPrescribed::ArterialInputFunctionPrescribed(const std::string& aifFileName,
@@ -38,49 +38,27 @@ void ArterialInputFunctionPrescribed::loadAifFromCsv(const std::string& fileName
   timing.clear();
   aif.clear();
 
-  std::string line;
-  std::ifstream csv;
-  csv.open(fileName.c_str());
-  if (csv.fail())
+  CSVReader csvReader(fileName);
+  while (csvReader.hasMoreRows())
   {
-    throw FileNotFoundException(fileName);
-  }
-
-  while (!csv.eof())
-  {
-    getline(csv, line);
-
-    if (line[0] == '#')
-    {
+    std::vector<std::string> sValues = csvReader.nextRow();
+    if (sValues.size() < 2) {
       continue;
     }
-
-    std::vector<std::string> svalues = StringUtils::split(line, ',');
-
-    if (svalues.size() < 2)
-    {
-      // not enough values on the line
-      continue;
-    }
-
+    
     float time = -1.0, value = -1.0;
     try {
-      time = std::stof(svalues[0]);
-      value = std::stof(svalues[1]);
+      time = std::stof(sValues[0]);
+      value = std::stof(sValues[1]);
     }
     catch (const std::invalid_argument& ia) {
       // not a float, probably the column labels, skip the row
       continue;
     }
-
     timing.push_back(time);
     aif.push_back(value);
   }
-
-  csv.close();
-
-  if (timing.size() == 0)
-  {
+  if (timing.size() < 2) {
     throw WrongFileFormatException(fileName);
   }
 }
