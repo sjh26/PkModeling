@@ -1,3 +1,5 @@
+#Derived from DRO3min5secinf_PrescribedAIF.csv by removing every 2nd entry
+Time,Signal
 0,0
 10,0
 20,0
