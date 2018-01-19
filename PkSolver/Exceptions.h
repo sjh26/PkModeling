@@ -21,5 +21,13 @@ public:
   {}
 };
 
+class ImageNullException : public std::runtime_error
+{
+public:
+  ImageNullException(const std::string& imageName)
+    : std::runtime_error(imageName + " does not exist.")
+  {}
+};
+
 
 #endif

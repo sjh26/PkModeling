@@ -19,7 +19,7 @@ public:
   float Hematocrit;
   float AUCTimeInterval;
   bool ComputeFpv;
-  bool UsePopulationAIF;
+  std::string AIFMode;
   std::string InputFourDImageFileName;
   std::string ROIMaskFileName;
   std::string T1MapFileName;
@@ -59,7 +59,7 @@ public:
     configuration.Hematocrit = Hematocrit; \
     configuration.AUCTimeInterval = AUCTimeInterval; \
     configuration.ComputeFpv = ComputeFpv; \
-    configuration.UsePopulationAIF = UsePopulationAIF; \
+    configuration.AIFMode = AIFMode; \
     configuration.InputFourDImageFileName = InputFourDImageFileName; \
     configuration.ROIMaskFileName = ROIMaskFileName; \
     configuration.T1MapFileName = T1MapFileName; \

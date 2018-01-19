@@ -32,7 +32,7 @@
 
 class PkModeling {
 private:
-  const Configuration cfg;
+  const Configuration m_config;
 
 public:
   static const unsigned int VectorVolumeDimension = 3;
@@ -56,7 +56,7 @@ public:
   typedef itk::ConcentrationToQuantitativeImageFilter<FloatVectorVolumeType, MaskVolumeType, OutputVolumeType> QuantifierType;
 
 
-  PkModeling(Configuration config) : cfg(config) {}
+  PkModeling(Configuration config) : m_config(config) {}
   virtual ~PkModeling() {}
 
 #define SimpleAttributeGetMethodMacro(name, key, type)     \
@@ -177,13 +177,33 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     return multiVolumeReader->GetOutput();
   }
 
-  std::unique_ptr<BolusArrivalTime::BolusArrivalTimeEstimator> getBatEstimator(const std::string& mode, int defaultConstantBAT)
+  std::unique_ptr<BolusArrivalTime::BolusArrivalTimeEstimator> getBatEstimator()
   {
-    std::unique_ptr<BolusArrivalTime::BolusArrivalTimeEstimator> batEstimator(new BolusArrivalTime::BolusArrivalTimeEstimatorConstant(defaultConstantBAT));
-    if (mode == "PeakGradient") {
+    std::unique_ptr<BolusArrivalTime::BolusArrivalTimeEstimator> batEstimator(new BolusArrivalTime::BolusArrivalTimeEstimatorConstant(m_config.ConstantBAT));
+    if (m_config.BATCalculationMode == "PeakGradient") {
       batEstimator.reset(new BolusArrivalTime::BolusArrivalTimeEstimatorPeakGradient());
     }
     return batEstimator;
+  }
+
+  std::unique_ptr<ArterialInputFunction> getAIF(const std::vector<float>& Timing, 
+                                                const VectorVolumeType::Pointer inputVectorVolume, 
+                                                const MaskVolumeType::Pointer aifMaskVolume)
+  {
+    std::unique_ptr<ArterialInputFunction> aif;
+    if (m_config.AIFMode == "Prescribed")
+    {
+      aif.reset(new ArterialInputFunctionPrescribed(m_config.PrescribedAIFFileName, Timing));
+    }
+    else if (m_config.AIFMode == "Population")
+    {
+      aif.reset(new ArterialInputFunctionPopulation(Timing));
+    }
+    else
+    {
+      aif.reset(new ArterialInputFunctionAverageUnderMask(inputVectorVolume, aifMaskVolume));
+    }
+    return aif;
   }
 
   void writeVectorVolumeIfFileNameValid(std::string fileName, const FloatVectorVolumeType::Pointer outVolume, const VectorVolumeType::Pointer referenceVolume)
@@ -217,27 +237,27 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
                             const QuantifierType::Pointer concentrationsToQuantitativeImageFilter,
                             const VectorVolumeType::Pointer inputVectorVolume)
   {
-    writeVectorVolumeIfFileNameValid(cfg.OutputConcentrationsImageFileName, signalToConcentrationsConverter->GetOutput(), inputVectorVolume);
-    writeVectorVolumeIfFileNameValid(cfg.OutputFittedDataImageFileName, concentrationsToQuantitativeImageFilter->GetFittedDataOutput(), inputVectorVolume);
+    writeVectorVolumeIfFileNameValid(m_config.OutputConcentrationsImageFileName, signalToConcentrationsConverter->GetOutput(), inputVectorVolume);
+    writeVectorVolumeIfFileNameValid(m_config.OutputFittedDataImageFileName, concentrationsToQuantitativeImageFilter->GetFittedDataOutput(), inputVectorVolume);
 
-    writeVolumeIfFileNameValid(cfg.OutputKtransFileName, concentrationsToQuantitativeImageFilter->GetKTransOutput());
-    writeVolumeIfFileNameValid(cfg.OutputVeFileName, concentrationsToQuantitativeImageFilter->GetVEOutput());
-    writeVolumeIfFileNameValid(cfg.OutputMaxSlopeFileName, concentrationsToQuantitativeImageFilter->GetMaxSlopeOutput());
-    writeVolumeIfFileNameValid(cfg.OutputAUCFileName, concentrationsToQuantitativeImageFilter->GetAUCOutput());
-    writeVolumeIfFileNameValid(cfg.OutputRSquaredFileName, concentrationsToQuantitativeImageFilter->GetRSquaredOutput());
-    writeVolumeIfFileNameValid(cfg.OutputBolusArrivalTimeImageFileName, concentrationsToQuantitativeImageFilter->GetBATOutput());
-    writeVolumeIfFileNameValid(cfg.OutputOptimizerDiagnosticsImageFileName, concentrationsToQuantitativeImageFilter->GetOptimizerDiagnosticsOutput());
+    writeVolumeIfFileNameValid(m_config.OutputKtransFileName, concentrationsToQuantitativeImageFilter->GetKTransOutput());
+    writeVolumeIfFileNameValid(m_config.OutputVeFileName, concentrationsToQuantitativeImageFilter->GetVEOutput());
+    writeVolumeIfFileNameValid(m_config.OutputMaxSlopeFileName, concentrationsToQuantitativeImageFilter->GetMaxSlopeOutput());
+    writeVolumeIfFileNameValid(m_config.OutputAUCFileName, concentrationsToQuantitativeImageFilter->GetAUCOutput());
+    writeVolumeIfFileNameValid(m_config.OutputRSquaredFileName, concentrationsToQuantitativeImageFilter->GetRSquaredOutput());
+    writeVolumeIfFileNameValid(m_config.OutputBolusArrivalTimeImageFileName, concentrationsToQuantitativeImageFilter->GetBATOutput());
+    writeVolumeIfFileNameValid(m_config.OutputOptimizerDiagnosticsImageFileName, concentrationsToQuantitativeImageFilter->GetOptimizerDiagnosticsOutput());
 
-    if (cfg.ComputeFpv) {
-      writeVolumeIfFileNameValid(cfg.OutputFpvFileName, concentrationsToQuantitativeImageFilter->GetFPVOutput());
+    if (m_config.ComputeFpv) {
+      writeVolumeIfFileNameValid(m_config.OutputFpvFileName, concentrationsToQuantitativeImageFilter->GetFPVOutput());
     }
   }
 
 
   int execute()
   {
-    VectorVolumeType::Pointer inputVectorVolume = getVectorVolume(cfg.InputFourDImageFileName);
-    std::unique_ptr<BolusArrivalTime::BolusArrivalTimeEstimator> batEstimator = getBatEstimator(cfg.BATCalculationMode, cfg.ConstantBAT);
+    VectorVolumeType::Pointer inputVectorVolume = getVectorVolume(m_config.InputFourDImageFileName);
+    std::unique_ptr<BolusArrivalTime::BolusArrivalTimeEstimator> batEstimator = getBatEstimator();
 
     std::vector<float> Timing;
     float FAValue = 0.0;
@@ -251,14 +271,14 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     catch (itk::ExceptionObject &exc)
     {
       itkGenericExceptionMacro(<< exc.GetDescription()
-        << " Image " << cfg.InputFourDImageFileName.c_str()
+        << " Image " << m_config.InputFourDImageFileName.c_str()
         << " does not contain sufficient attributes to support algorithms.");
     }
 
     //Read masks
-    MaskVolumeType::Pointer aifMaskVolume = getMaskVolumeOrNull(cfg.AIFMaskFileName);
-    MaskVolumeType::Pointer T1MapVolume = getMaskVolumeOrNull(cfg.T1MapFileName);
-    MaskVolumeType::Pointer roiMaskVolume = getResampledMaskVolumeOrNull(cfg.ROIMaskFileName, inputVectorVolume);
+    MaskVolumeType::Pointer aifMaskVolume = getMaskVolumeOrNull(m_config.AIFMaskFileName);
+    MaskVolumeType::Pointer T1MapVolume = getMaskVolumeOrNull(m_config.T1MapFileName);
+    MaskVolumeType::Pointer roiMaskVolume = getResampledMaskVolumeOrNull(m_config.ROIMaskFileName, inputVectorVolume);
 
 
     /////////////////////////////// PROCESSING /////////////////////
@@ -267,73 +287,53 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     ConvertFilterType::Pointer signalToConcentrationsConverter = ConvertFilterType::New();
     signalToConcentrationsConverter->SetInput(inputVectorVolume);
 
-    if (cfg.PrescribedAIFFileName == "" && !cfg.UsePopulationAIF)
+    if (m_config.AIFMode == "AverageUnderAIFMask")
     {
       signalToConcentrationsConverter->SetAIFMask(aifMaskVolume);
     }
 
-    if (cfg.ROIMaskFileName != "")
+    if (m_config.ROIMaskFileName != "")
     {
       signalToConcentrationsConverter->SetROIMask(roiMaskVolume);
     }
 
-    signalToConcentrationsConverter->SetT1PreBlood(cfg.T1PreBloodValue);
-    signalToConcentrationsConverter->SetT1PreTissue(cfg.T1PreTissueValue);
+    signalToConcentrationsConverter->SetT1PreBlood(m_config.T1PreBloodValue);
+    signalToConcentrationsConverter->SetT1PreTissue(m_config.T1PreTissueValue);
     signalToConcentrationsConverter->SetTR(TRValue);
     signalToConcentrationsConverter->SetFA(FAValue);
     signalToConcentrationsConverter->SetBatEstimator(batEstimator.get());
-    signalToConcentrationsConverter->SetRGD_relaxivity(cfg.RelaxivityValue);
-    signalToConcentrationsConverter->SetS0GradThresh(cfg.S0GradValue);
+    signalToConcentrationsConverter->SetRGD_relaxivity(m_config.RelaxivityValue);
+    signalToConcentrationsConverter->SetS0GradThresh(m_config.S0GradValue);
 
-    if (cfg.T1MapFileName != "")
+    if (m_config.T1MapFileName != "")
     {
       signalToConcentrationsConverter->SetT1Map(T1MapVolume);
     }
 
-    itk::PluginFilterWatcher watchConverter(signalToConcentrationsConverter, "Concentrations", cfg.CLPProcessInformation, 1.0 / 20.0, 0.0);
+    itk::PluginFilterWatcher watchConverter(signalToConcentrationsConverter, "Concentrations", m_config.CLPProcessInformation, 1.0 / 20.0, 0.0);
     signalToConcentrationsConverter->Update();
 
-    //Get correct AIF according to cfg
-    std::unique_ptr<ArterialInputFunction> aif;
-    if (cfg.PrescribedAIFFileName != "")
-    {
-      aif.reset(new ArterialInputFunctionPrescribed(cfg.PrescribedAIFFileName, Timing));
-    }
-    else if (cfg.UsePopulationAIF)
-    {
-      aif.reset(new ArterialInputFunctionPopulation(Timing));
-    }
-    else if (cfg.AIFMaskFileName != "")
-    {
-      aif.reset(new ArterialInputFunctionAverageUnderMask(signalToConcentrationsConverter->GetOutput(), aifMaskVolume));
-    }
-    else
-    {
-      itkGenericExceptionMacro(<< "Either a mask localizing the region over which to "
-        << "calculate the arterial input function or a prescribed "
-        << "arterial input function must be specified.");
-    }
-
+    std::unique_ptr<ArterialInputFunction> aif = getAIF(Timing, signalToConcentrationsConverter->GetOutput(), aifMaskVolume);
 
     //Calculate parameters
     QuantifierType::Pointer concentrationsToQuantitativeImageFilter = QuantifierType::New();
     concentrationsToQuantitativeImageFilter->SetInput(signalToConcentrationsConverter->GetOutput());
     concentrationsToQuantitativeImageFilter->SetAIF(aif.get());
-    concentrationsToQuantitativeImageFilter->SetAUCTimeInterval(cfg.AUCTimeInterval);
+    concentrationsToQuantitativeImageFilter->SetAUCTimeInterval(m_config.AUCTimeInterval);
     concentrationsToQuantitativeImageFilter->SetTiming(Timing);
-    concentrationsToQuantitativeImageFilter->SetfTol(cfg.FTolerance);
-    concentrationsToQuantitativeImageFilter->SetgTol(cfg.GTolerance);
-    concentrationsToQuantitativeImageFilter->SetxTol(cfg.XTolerance);
-    concentrationsToQuantitativeImageFilter->Setepsilon(cfg.Epsilon);
-    concentrationsToQuantitativeImageFilter->SetmaxIter(cfg.MaxIter);
-    concentrationsToQuantitativeImageFilter->Sethematocrit(cfg.Hematocrit);
+    concentrationsToQuantitativeImageFilter->SetfTol(m_config.FTolerance);
+    concentrationsToQuantitativeImageFilter->SetgTol(m_config.GTolerance);
+    concentrationsToQuantitativeImageFilter->SetxTol(m_config.XTolerance);
+    concentrationsToQuantitativeImageFilter->Setepsilon(m_config.Epsilon);
+    concentrationsToQuantitativeImageFilter->SetmaxIter(m_config.MaxIter);
+    concentrationsToQuantitativeImageFilter->Sethematocrit(m_config.Hematocrit);
     concentrationsToQuantitativeImageFilter->SetBatEstimator(batEstimator.get());
-    if (cfg.ROIMaskFileName != "")
+    if (m_config.ROIMaskFileName != "")
     {
       concentrationsToQuantitativeImageFilter->SetROIMask(roiMaskVolume);
     }
 
-    if (cfg.ComputeFpv)
+    if (m_config.ComputeFpv)
     {
       concentrationsToQuantitativeImageFilter->SetModelType(itk::LMCostFunction::TOFTS_3_PARAMETER);
     }
@@ -342,7 +342,7 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
       concentrationsToQuantitativeImageFilter->SetModelType(itk::LMCostFunction::TOFTS_2_PARAMETER);
     }
 
-    itk::PluginFilterWatcher watchQuantifier(concentrationsToQuantitativeImageFilter, "Quantifying", cfg.CLPProcessInformation, 19.0 / 20.0, 1.0 / 20.0);
+    itk::PluginFilterWatcher watchQuantifier(concentrationsToQuantitativeImageFilter, "Quantifying", m_config.CLPProcessInformation, 19.0 / 20.0, 1.0 / 20.0);
     concentrationsToQuantitativeImageFilter->Update();
 
     ///////////////////////////////////// OUTPUT ////////////////////

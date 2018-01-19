@@ -61,6 +61,7 @@ endif()
 # Unit/Integration tests
 #-----------------------------------------------------------------------------
 include(ComparisonFilterTests.cmake)
+include(TestArgumentHandling.cmake)
 
 #-----------------------------------------------------------------------------
 # Regression tests
@@ -69,101 +70,3 @@ include(RegressionTests.cmake)
 
 
 
-#-----------------------------------------------------------------------------
-#if(DUKEDATA_DIR_DIR)
-#  set(testName ${CLP}TestDukeSyntheticData)
-#  add_test(NAME ${testName} COMMAND ${Launcher_Command} $<TARGET_FILE:${CLP}Test>
-#    ModuleEntryPoint        
-#                --T1Tissue 1000
-#                --T1Blood 1440
-#                --relaxivity 0.0049 
-#                --hematocrit 0.45
-#                --aucTimeInterval 90
-#                ${DUKEDATA_DIR}/SyntheticDuke.nrrd                   
-#                ${DUKEDATA_DIR}/SyntheticDukeMask.nrrd
-#                --outputKtrans ${TEMP}/ktransVolumeSyn.nrrd 
-#                --outputVe ${TEMP}/veVolumeSyn.nrrd
-#                --outputMaxSlope ${TEMP}/maxSlopeVolumeSyn.nrrd
-#                --outputAUC ${TEMP}/AUCVolumeSyn.nrrd           
-#                )
-#  set_property(TEST ${testName} PROPERTY LABELS ${CLP})
-#endif()
-
-
-#-----------------------------------------------------------------------------
-#if(DUKEDATA_DIR_DIR)
-#  set(testName ${CLP}TestDukeSyntheticData)
-#  add_test(NAME ${testName} COMMAND ${Launcher_Command} $<TARGET_FILE:${CLP}Test>
-#    ModuleEntryPoint        
-#                --T1Tissue 1000
-#                --T1Blood 1440
-#                --relaxivity 0.0049 
-#                --hematocrit 0.45
-#                --aucTimeInterval 90
-#                ${DUKEDATA_DIR}/SyntheticDuke.nrrd                   
-#                ${DUKEDATA_DIR}/SyntheticDukeMask.nrrd
-#                --outputKtrans ${TEMP}/ktransVolumeSyn.nrrd 
-#                --outputVe ${TEMP}/veVolumeSyn.nrrd
-#                --outputMaxSlope ${TEMP}/maxSlopeVolumeSyn.nrrd
-#                --outputAUC ${TEMP}/AUCVolumeSyn.nrrd           
-#                )
-#  set_property(TEST ${testName} PROPERTY LABELS ${CLP})
-#endif()
-
-#-----------------------------------------------------------------------------
-# set(testName ${CLP}TestSmallVolumeOfDukeSyntheticData)
-# add_test(NAME ${testName} COMMAND ${Launcher_Command} $<TARGET_FILE:${CLP}Test>
-#                 ModuleEntryPoint
-#                 --T1Tissue 1000
-#                 --T1Blood 1440
-#                 #--TR 5
-#                 #--FA 25
-#                 --relaxivity 0.0049 
-#                 --hematocrit 0.45
-#                 --aucTimeInterval 90
-#                 ${DUKEDATA_DIR}/SyntheticDukeSmallVolume.nrrd   
-#                 ${DUKEDATA_DIR}/SyntheticDukeSmallVolumeMask.nrrd
-#                 --outputKtrans ${TEMP}/ktransVolumeSynSmallVolume.nrrd 
-#                 --outputVe ${TEMP}/veVolumeSynSmallVolume.nrrd
-#                 --outputMaxSlope ${TEMP}/maxSlopeVolumeSynSmallVolume.nrrd
-#                 --outputAUC ${TEMP}/AUCVolumeSynSmallVolume.nrrd   
-#   )
-# set_property(TEST ${testName} PROPERTY LABELS ${CLP})
- 
-# set(testName ${CLP}TestDukeSyntheticData)
-# add_test(NAME ${testName} COMMAND ${Launcher_Command} $<TARGET_FILE:${CLP}Test>
-#   ModuleEntryPoint        
-#                 --T1Tissue 1000
-#                 --T1Blood 1440
-#                 #--TR 5
-#                 #--FA 25
-#                 --relaxivity 0.0049 
-#                 --hematocrit 0.45
-#                 --aucTimeInterval 90
-#                 ${DUKEDATA_DIR}/SyntheticDuke.nrrd                   
-#                 ${DUKEDATA_DIR}/SyntheticDukeMask.nrrd
-#                 --outputKtrans ${TEMP}/ktransVolumeSyn.nrrd 
-#                 --outputVe ${TEMP}/veVolumeSyn.nrrd
-#                 --outputMaxSlope ${TEMP}/maxSlopeVolumeSyn.nrrd
-#                 --outputAUC ${TEMP}/AUCVolumeSyn.nrrd           
-#   )
-# set_property(TEST ${testName} PROPERTY LABELS ${CLP})
- 
-# set(testName ${CLP}TestDCEMRIData)
-# add_test(NAME ${testName} COMMAND ${Launcher_Command} $<TARGET_FILE:${CLP}Test>
-#                 ModuleEntryPoint
-#                 --T1Tissue 1597
-#                 --T1Blood 1600
-#                 #--TR 3.984
-#                 #--FA 15
-#                 --relaxivity 0.0049 
-#                 --hematocrit 0.4
-#                 --aucTimeInterval 90
-#                 ${DCEMRIDATA}/OriginalVolume.nrrd             
-#                 ${DCEMRIDATA}/maskVolume.nrrd
-#                 --outputKtrans ${TEMP}/ktransVolume.nrrd 
-#                 --outputVe ${TEMP}/veVolume.nrrd
-#                 --outputMaxSlope ${TEMP}/maxSlopeVolume.nrrd
-#                 --outputAUC ${TEMP}/AUCVolume.nrrd             
-#   )
-# set_property(TEST ${testName} PROPERTY LABELS ${CLP})

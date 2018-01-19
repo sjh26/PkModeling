@@ -134,7 +134,7 @@ add_test(NAME ${testName} COMMAND ${Launcher_Command} $<TARGET_FILE:${CLP}Test>
   ${compareArgs}
   ModuleEntryPoint
     ${paramsArgs}
-    --usePopAif
+    --aifMode Population
     ${outputParamsArgs}
     ${inputDataBaseName}.nrrd                   
 )
@@ -151,7 +151,7 @@ add_test(NAME ${testName} COMMAND ${Launcher_Command} $<TARGET_FILE:${CLP}Test>
   ${compareArgs}
   ModuleEntryPoint
     ${paramsArgs}
-    --usePopAif
+    --aifMode Population
     --BATCalculationMode UseConstantBAT
     --constantBAT 4
     ${outputParamsArgs}
@@ -386,7 +386,8 @@ set(paramsArgs --T1Tissue 1434
                --gTolerance 1e-4 
                --xTolerance 1e-5 
                --epsilon 1e-9 
-               --maxIter 200)
+               --maxIter 200
+               --aifMode Prescribed)
 set_outputParamsArgs(FALSE)
 add_test(NAME ${testName} COMMAND ${Launcher_Command} $<TARGET_FILE:${CLP}Test>
   ${compareArgs}
@@ -414,7 +415,8 @@ set(paramsArgs --T1Tissue 1434
                --gTolerance 1e-4 
                --xTolerance 1e-5 
                --epsilon 1e-9 
-               --maxIter 200)
+               --maxIter 200
+               --aifMode Prescribed)
 set_outputParamsArgs(FALSE)
 add_test(NAME ${testName} COMMAND ${Launcher_Command} $<TARGET_FILE:${CLP}Test>
   ${compareArgs}
@@ -436,7 +438,6 @@ set(referenceDataBaseName ${referenceDataBaseDir}${testName})
 set_compareArgs(FALSE)
 set(paramsArgs --T1Tissue 1434
                --T1Blood 1600
-               --usePopAif
                --relaxivity 0.0037
                --S0grad 15.0
                --hematocrit 0.45
@@ -445,7 +446,8 @@ set(paramsArgs --T1Tissue 1434
                --gTolerance 1e-4 
                --xTolerance 1e-5 
                --epsilon 1e-9 
-               --maxIter 200)
+               --maxIter 200
+               --aifMode Population)
 set_outputParamsArgs(FALSE)
 add_test(NAME ${testName} COMMAND ${Launcher_Command} $<TARGET_FILE:${CLP}Test>
   ${compareArgs}

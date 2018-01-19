@@ -1,10 +1,18 @@
 #include "ArterialInputFunctionAverageUnderMask.h"
 
+#include "Exceptions.h"
+
 ArterialInputFunctionAverageUnderMask::ArterialInputFunctionAverageUnderMask(const itk::VectorImage<float, 3>* inputVectorVolume,
                                                                              const itk::Image<unsigned short, 3>* maskVolume)
                                                                              : m_inputVectorVolume(inputVectorVolume), 
                                                                                m_maskVolume(maskVolume)
 {
+  if (!inputVectorVolume) {
+    throw ImageNullException("Input image");
+  }
+  if (!maskVolume) {
+    throw ImageNullException("AIF mask");
+  }
   m_aif = computeAIF();
 }
 
