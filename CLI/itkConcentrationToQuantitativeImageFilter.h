@@ -146,27 +146,6 @@ namespace itk
     void SetTiming(const std::vector<float>& inputTiming);
     const std::vector<float>& GetTiming();
 
-    /// Control whether a prescribed AIF vector is used or whether the
-    /// AIF is specified by a mask. If UsePrescribedAIF is true, then
-    /// an AIF supplied as a vector is used rather than being derived
-    /// from a mask applied to the input concentration values. Default
-    /// is off.
-    itkSetMacro(UsePrescribedAIF, bool);
-    itkGetMacro(UsePrescribedAIF, bool);
-    itkBooleanMacro(UsePrescribedAIF);
-
-    /// Control whether a population AIF vector is used.
-    itkSetMacro(UsePopulationAIF, bool);
-    itkGetMacro(UsePopulationAIF, bool);
-    itkBooleanMacro(UsePopulationAIF);
-
-    /// Set a mask to specify where the AIF is be calculated from the
-    /// input concentration image.
-    void SetAIFMask(const MaskVolumeType* volume);
-
-    /// Get the mask that specifies from where the AIF is calculated
-    const TMaskImage* GetAIFMask() const;
-
     /// Set a mask to specify where the model fit is be calculated from the
     /// input concentration image.
     void SetROIMask(const MaskVolumeType* volume);
@@ -228,12 +207,9 @@ namespace itk
     int    m_AIFBATIndex;
     int    m_ModelType;
     const BolusArrivalTime::BolusArrivalTimeEstimator* m_batEstimator;
+    const ArterialInputFunction* m_aif;
 
     std::vector<float> m_Timing;
-
-    bool m_UsePopulationAIF;
-    bool m_UsePrescribedAIF;
-    const ArterialInputFunction* m_aif;
 
     // variables to cache information to share between threads
     std::vector<float> m_AIF;

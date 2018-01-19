@@ -17,6 +17,8 @@
 #include "itkConcentrationToQuantitativeImageFilter.h"
 
 #include "AIF/ArterialInputFunctionPrescribed.h"
+#include "AIF/ArterialInputFunctionPopulation.h"
+#include "AIF/ArterialInputFunctionAverageUnderMask.h"
 
 #include "BAT/BolusArrivalTimeEstimator.h"
 #include "BAT/BolusArrivalTimeEstimatorConstant.h"
@@ -258,25 +260,6 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     MaskVolumeType::Pointer T1MapVolume = getMaskVolumeOrNull(cfg.T1MapFileName);
     MaskVolumeType::Pointer roiMaskVolume = getResampledMaskVolumeOrNull(cfg.ROIMaskFileName, inputVectorVolume);
 
-    //Read prescribed aif
-    bool usingPrescribedAIF = false;
-    std::unique_ptr<ArterialInputFunction> aif;
-    if (cfg.PrescribedAIFFileName != "")
-    {
-      try {
-        aif.reset(new ArterialInputFunctionPrescribed(cfg.PrescribedAIFFileName, Timing));
-        usingPrescribedAIF = true;
-      }
-      catch (...) 
-      {}
-    }
-
-    if (cfg.AIFMaskFileName == "" && !usingPrescribedAIF && !cfg.UsePopulationAIF)
-    {
-      itkGenericExceptionMacro(<< "Either a mask localizing the region over which to "
-        << "calculate the arterial input function or a prescribed "
-        << "arterial input function must be specified.");
-    }
 
     /////////////////////////////// PROCESSING /////////////////////
 
@@ -284,7 +267,7 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     ConvertFilterType::Pointer signalToConcentrationsConverter = ConvertFilterType::New();
     signalToConcentrationsConverter->SetInput(inputVectorVolume);
 
-    if (!usingPrescribedAIF && !cfg.UsePopulationAIF)
+    if (cfg.PrescribedAIFFileName == "" && !cfg.UsePopulationAIF)
     {
       signalToConcentrationsConverter->SetAIFMask(aifMaskVolume);
     }
@@ -310,23 +293,32 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     itk::PluginFilterWatcher watchConverter(signalToConcentrationsConverter, "Concentrations", cfg.CLPProcessInformation, 1.0 / 20.0, 0.0);
     signalToConcentrationsConverter->Update();
 
-    //Calculate parameters
-    QuantifierType::Pointer concentrationsToQuantitativeImageFilter = QuantifierType::New();
-    concentrationsToQuantitativeImageFilter->SetInput(signalToConcentrationsConverter->GetOutput());
-    if (usingPrescribedAIF)
+    //Get correct AIF according to cfg
+    std::unique_ptr<ArterialInputFunction> aif;
+    if (cfg.PrescribedAIFFileName != "")
     {
-      concentrationsToQuantitativeImageFilter->SetAIF(aif.get());
-      concentrationsToQuantitativeImageFilter->UsePrescribedAIFOn();
+      aif.reset(new ArterialInputFunctionPrescribed(cfg.PrescribedAIFFileName, Timing));
     }
     else if (cfg.UsePopulationAIF)
     {
-      concentrationsToQuantitativeImageFilter->UsePopulationAIFOn();
+      aif.reset(new ArterialInputFunctionPopulation(Timing));
+    }
+    else if (cfg.AIFMaskFileName != "")
+    {
+      aif.reset(new ArterialInputFunctionAverageUnderMask(signalToConcentrationsConverter->GetOutput(), aifMaskVolume));
     }
     else
     {
-      concentrationsToQuantitativeImageFilter->SetAIFMask(aifMaskVolume);
+      itkGenericExceptionMacro(<< "Either a mask localizing the region over which to "
+        << "calculate the arterial input function or a prescribed "
+        << "arterial input function must be specified.");
     }
 
+
+    //Calculate parameters
+    QuantifierType::Pointer concentrationsToQuantitativeImageFilter = QuantifierType::New();
+    concentrationsToQuantitativeImageFilter->SetInput(signalToConcentrationsConverter->GetOutput());
+    concentrationsToQuantitativeImageFilter->SetAIF(aif.get());
     concentrationsToQuantitativeImageFilter->SetAUCTimeInterval(cfg.AUCTimeInterval);
     concentrationsToQuantitativeImageFilter->SetTiming(Timing);
     concentrationsToQuantitativeImageFilter->SetfTol(cfg.FTolerance);

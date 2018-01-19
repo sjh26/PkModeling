@@ -13,9 +13,7 @@
 
 #include "itkConcentrationToQuantitativeImageFilter.h"
 
-#include "AIF/ArterialInputFunctionAverageUnderMask.h" //TODO Replace by Abstract Interface to AIF
-#include "AIF/ArterialInputFunctionPopulation.h" //TODO Replace by Abstract Interface to AIF
-
+#include "AIF/ArterialInputFunction.h"
 
 namespace itk
 {
@@ -36,8 +34,6 @@ namespace itk
     m_hematocrit = 0.4f;
     m_aifAUC = 0.0f;
     m_AIFBATIndex = 0;
-    m_UsePopulationAIF = false;
-    m_UsePrescribedAIF = false;
     m_ModelType = itk::LMCostFunction::TOFTS_2_PARAMETER;
     this->Superclass::SetNumberOfRequiredInputs(1);
     this->Superclass::SetNthOutput(1, static_cast<TOutputImage*>(this->MakeOutput(1).GetPointer()));  // Ve
@@ -65,8 +61,6 @@ namespace itk
     }
   }
 
-  // Set a prescribed AIF.  This is not currrently in the input vector,
-  // though it could be if we used a Decorator.
   template< class TInputImage, class TMaskImage, class TOutputImage >
   void
     ConcentrationToQuantitativeImageFilter< TInputImage, TMaskImage, TOutputImage >
@@ -74,26 +68,9 @@ namespace itk
   {
     if (aif->getSignalSize() < 2)
     {
-      itkExceptionMacro(<< "Prescribed AIF must contain at least two time points");
+      itkExceptionMacro(<< "AIF must contain at least two time points");
     }
     m_aif = aif;
-  }
-
-  // Set 3D AIF mask as second input
-  template< class TInputImage, class TMaskImage, class TOutputImage >
-  void
-    ConcentrationToQuantitativeImageFilter< TInputImage, TMaskImage, TOutputImage >
-    ::SetAIFMask(const TMaskImage* volume)
-  {
-    this->SetNthInput(1, const_cast<TMaskImage*>(volume));
-  }
-
-  template< class TInputImage, class TMaskImage, class TOutputImage >
-  const TMaskImage*
-    ConcentrationToQuantitativeImageFilter< TInputImage, TMaskImage, TOutputImage >
-    ::GetAIFMask() const
-  {
-    return dynamic_cast<const TMaskImage *>(this->ProcessObject::GetInput(1));
   }
 
   // Set 3D ROI mask as third input
@@ -191,7 +168,6 @@ namespace itk
     ::BeforeThreadedGenerateData()
   {
     const VectorVolumeType* inputVectorVolume = this->GetInput();
-    const MaskVolumeType* maskVolume = this->GetAIFMask();
 
     std::cout << "Model type: " << m_ModelType << std::endl;
 
@@ -202,25 +178,9 @@ namespace itk
     OutputVolumeType *fpv = this->GetFPVOutput();
     fpv->FillBuffer(0.0);
 
-    // calculate AIF
-    if (m_UsePrescribedAIF)
-    {
-      m_AIF = m_aif->getSignalValues();
-    }
-    else if (maskVolume && !m_UsePopulationAIF)
-    {
-      ArterialInputFunctionAverageUnderMask aif(inputVectorVolume, maskVolume);
-      m_AIF = aif.getSignalValues();
-    }
-    else if (m_UsePopulationAIF)
-    {
-      ArterialInputFunctionPopulation aif(m_Timing);
-      m_AIF = aif.getSignalValues();
-    }
-    else
-    {
-      itkExceptionMacro("A mask image over which to establish the AIF or a prescribed AIF must be assigned. If prescribing an AIF, then UsePrescribedAIF must be set to true.");
-    }
+    // get AIF signal
+    m_AIF = m_aif->getSignalValues();
+    
     // Compute the bolus arrival time
     m_AIFBATIndex = m_batEstimator->getBATIndex(m_AIF.size(), &m_AIF[0]);
 
@@ -284,19 +244,6 @@ namespace itk
     }
 
     ProgressReporter progress(this, threadId, outputRegionForThread.GetNumberOfPixels());
-
-    // Cache the RMS error of fitting the model to the AIF
-    // pk_solver(timeSize, &timeMinute[0],
-    //           &m_AIF[0],
-    //           &m_AIF[0],
-    //           tempKtrans, tempVe, tempFpv,
-    //           m_fTol,m_gTol,m_xTol,
-    //           m_epsilon,m_maxIter, m_hematocrit,
-    //           optimizer,costFunction);
-
-    // double aifRMS = optimizer->GetOptimizer()->get_end_error();
-    // std::cout << "AIF RMS: " << aifRMS  << std::endl;
-
 
     VectorVoxelType shiftedVectorVoxel(timeSize);
     int shift;
