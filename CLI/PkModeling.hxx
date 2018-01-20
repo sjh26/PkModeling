@@ -24,6 +24,8 @@
 #include "BAT/BolusArrivalTimeEstimatorConstant.h"
 #include "BAT/BolusArrivalTimeEstimatorPeakGradient.h"
 
+#include "IO/MultiVolumeMetaDictReader.h"
+
 #include <sstream>
 #include <fstream>
 #include <memory>
@@ -58,81 +60,6 @@ public:
 
   PkModeling(Configuration config) : m_config(config) {}
   virtual ~PkModeling() {}
-
-#define SimpleAttributeGetMethodMacro(name, key, type)     \
-type Get##name(itk::MetaDataDictionary& dictionary)           \
-  {\
-  type value = type(); \
-  if (dictionary.HasKey(key))\
-        {\
-    /* attributes stored as strings */ \
-    std::string valueString; \
-    itk::ExposeMetaData(dictionary, key, valueString);  \
-    std::stringstream valueStream(valueString); \
-    valueStream >> value; \
-        }\
-        else\
-      {\
-    itkGenericExceptionMacro("Missing attribute '" key "'.");\
-      }\
-  return value;\
-  }
-
-  //SimpleAttributeGetMethodMacro(EchoTime, "MultiVolume.DICOM.EchoTime", float);
-  SimpleAttributeGetMethodMacro(RepetitionTime, "MultiVolume.DICOM.RepetitionTime", float);
-  SimpleAttributeGetMethodMacro(FlipAngle, "MultiVolume.DICOM.FlipAngle", float);
-
-  std::vector<float> GetTiming(itk::MetaDataDictionary& dictionary)
-  {
-    std::vector<float> triggerTimes;
-
-    if (dictionary.HasKey("MultiVolume.FrameIdentifyingDICOMTagName"))
-    {
-      std::string tag;
-      itk::ExposeMetaData(dictionary, "MultiVolume.FrameIdentifyingDICOMTagName", tag);
-      if (dictionary.HasKey("MultiVolume.FrameLabels"))
-      {
-        // Acquisition parameters stored as text, FrameLabels are comma separated
-        std::string frameLabelsString;
-        itk::ExposeMetaData(dictionary, "MultiVolume.FrameLabels", frameLabelsString);
-        std::stringstream frameLabelsStream(frameLabelsString);
-        if (tag == "TriggerTime" || tag == "AcquisitionTime" || tag == "SeriesTime" || tag == "ContentTime")
-        {
-          float t;
-          float t0 = 0.0;
-          bool first = true;
-          while (frameLabelsStream >> t)
-          {
-            t /= 1000.0;  // convert to seconds
-            if (first)
-            {
-              t0 = t;
-              first = false;
-            }
-            t = t - t0;
-
-            triggerTimes.push_back(t);
-            frameLabelsStream.ignore(1); // skip the comma
-          }
-        }
-        else
-        {
-          itkGenericExceptionMacro("Unrecognized frame identifying DICOM tag name " << tag);
-        }
-        // what other frame identification methods are there?
-      }
-      else
-      {
-        itkGenericExceptionMacro("Missing attribute 'MultiVolume.FrameLabels'.")
-      }
-    }
-    else
-    {
-      itkGenericExceptionMacro("Missing attribute 'MultiVolume.FrameIdentifyingDICOMTagName'.");
-    }
-
-    return triggerTimes;
-  }
 
 
   MaskVolumeType::Pointer getMaskVolumeOrNull(const std::string& maskFileName)
@@ -259,14 +186,16 @@ type Get##name(itk::MetaDataDictionary& dictionary)           \
     VectorVolumeType::Pointer inputVectorVolume = getVectorVolume(m_config.InputFourDImageFileName);
     std::unique_ptr<BolusArrivalTime::BolusArrivalTimeEstimator> batEstimator = getBatEstimator();
 
+    MultiVolumeMetaDictReader imageMetaDict(inputVectorVolume->GetMetaDataDictionary());
+
     std::vector<float> Timing;
     float FAValue = 0.0;
     float TRValue = 0.0;
     try
     {
-      Timing = GetTiming(inputVectorVolume->GetMetaDataDictionary());
-      FAValue = GetFlipAngle(inputVectorVolume->GetMetaDataDictionary());
-      TRValue = GetRepetitionTime(inputVectorVolume->GetMetaDataDictionary());
+      Timing = imageMetaDict.getTiming();
+      FAValue = imageMetaDict.get("MultiVolume.DICOM.FlipAngle");
+      TRValue = imageMetaDict.get("MultiVolume.DICOM.RepetitionTime");
     }
     catch (itk::ExceptionObject &exc)
     {

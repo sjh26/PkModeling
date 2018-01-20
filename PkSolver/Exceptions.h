@@ -29,5 +29,12 @@ public:
   {}
 };
 
+class FailedDictionaryLookup : public std::runtime_error
+{
+public:
+  FailedDictionaryLookup(const std::string& key)
+    : std::runtime_error("Failed lookup up key \"" + key + "\" in dictionary.")
+  {}
+};
 
 #endif
