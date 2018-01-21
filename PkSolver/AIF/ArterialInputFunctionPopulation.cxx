@@ -31,22 +31,22 @@ std::vector<float> ArterialInputFunctionPopulation::computeAIF() const
   std::vector<float> aif_time(m_referenceSignalTime.size() * 10);
   const float final_time_point = m_referenceSignalTime[m_referenceSignalTime.size() - 1];
   const float resolution = final_time_point / (aif_time.size() - 1);
-  for (size_t j = 0; j < aif_time.size(); ++j)
+  for (std::size_t j = 0; j < aif_time.size(); ++j)
   {
     aif_time[j] = resolution * j;
   }
 
-  size_t bolus_arrival_time_idx = aif_time.size() * m_bolusArrivalTimeFraction;
+  std::size_t bolus_arrival_time_idx = aif_time.size() * m_bolusArrivalTimeFraction;
 
-  size_t n = aif_time.size();
+  std::size_t n = aif_time.size();
   AIF.resize(n);
 
-  size_t numTimePoints = n - bolus_arrival_time_idx;
+  std::size_t numTimePoints = n - bolus_arrival_time_idx;
   std::vector<float> timeSinceBolus(numTimePoints);
 
 
   // These time points "start" when the bolus arrives.
-  for (size_t j = 0; j < numTimePoints; ++j)
+  for (std::size_t j = 0; j < numTimePoints; ++j)
   {
     timeSinceBolus[j] = aif_time[bolus_arrival_time_idx + j] - aif_time[bolus_arrival_time_idx];
   }
@@ -69,7 +69,7 @@ std::vector<float> ArterialInputFunctionPopulation::computeAIF() const
   // Here the assumption is that time is in minutes, so must scale accordingly.
   // see Parker.
   std::vector<double> term0(numTimePoints);
-  for (size_t j = 0; j < numTimePoints; ++j)
+  for (std::size_t j = 0; j < numTimePoints; ++j)
   {
     term0[j] = alpha * exp(-beta*timeSinceBolus[j] / 60.0)
       / (1 + exp(-s * (timeSinceBolus[j] / 60.0 - tau)));
@@ -81,7 +81,7 @@ std::vector<float> ArterialInputFunctionPopulation::computeAIF() const
   double numerator, denominator;
   std::vector<double> B1(numTimePoints);
   denominator = 2.0 * pow(sigma1, 2.0);
-  for (size_t j = 0; j < numTimePoints; ++j)
+  for (std::size_t j = 0; j < numTimePoints; ++j)
   {
     numerator = -1 * pow(-(timeSinceBolus[j] / 60.0 - T1), 2.0);
     B1[j] = exp(numerator / denominator);
@@ -89,7 +89,7 @@ std::vector<float> ArterialInputFunctionPopulation::computeAIF() const
 
   // term1=A1.*B1;
   std::vector<double> term1(numTimePoints);
-  for (size_t j = 0; j < numTimePoints; ++j)
+  for (std::size_t j = 0; j < numTimePoints; ++j)
   {
     term1[j] = A1 * B1[j];
   }
@@ -100,7 +100,7 @@ std::vector<float> ArterialInputFunctionPopulation::computeAIF() const
   //B2=exp(-(t-T2).^2./(2.*sigma2^2));
   std::vector<double> B2(numTimePoints);
   denominator = 2.0 * pow(sigma2, 2.0);
-  for (size_t j = 0; j < numTimePoints; ++j)
+  for (std::size_t j = 0; j < numTimePoints; ++j)
   {
     numerator = -1 * pow(-(timeSinceBolus[j] / 60.0 - T2), 2.0);
     B2[j] = exp(numerator / denominator);
@@ -108,26 +108,26 @@ std::vector<float> ArterialInputFunctionPopulation::computeAIF() const
 
   // term2=A2.*B2;
   std::vector<double> term2(numTimePoints);
-  for (size_t j = 0; j < numTimePoints; ++j)
+  for (std::size_t j = 0; j < numTimePoints; ++j)
   {
     term2[j] = A2 * B2[j];
   }
 
   // aifPost=term0+term1+term2;
   std::vector<double> aifPost(numTimePoints);
-  for (size_t j = 0; j < numTimePoints; ++j)
+  for (std::size_t j = 0; j < numTimePoints; ++j)
   {
     aifPost[j] = term0[j] + term1[j] + term2[j];
   }
 
   // Initialize values before bolus arrival.
-  for (size_t j = 0; j < bolus_arrival_time_idx; ++j)
+  for (std::size_t j = 0; j < bolus_arrival_time_idx; ++j)
   {
     AIF[j] = 0;
   }
 
   // Shift the data to take into account the bolus arrival time.
-  for (size_t j = bolus_arrival_time_idx; j < AIF.size(); ++j)
+  for (std::size_t j = bolus_arrival_time_idx; j < AIF.size(); ++j)
   {
     AIF[j] = aifPost[j - bolus_arrival_time_idx];
   }

@@ -23,7 +23,7 @@ namespace SignalUtils
 
   std::vector<float> resampleSignal(std::vector<float> signalTime, std::vector<float> signal, std::vector<float> referenceTime)
   {
-    size_t timeSize = referenceTime.size();
+    std::vector<float>::size_type timeSize = referenceTime.size();
     std::vector<float> resampledSignal(timeSize);
 
     std::vector<float>::iterator resampledSignalIter = resampledSignal.begin();
