@@ -18,7 +18,7 @@ public:
   std::vector<std::string> nextRow();
 
 private:
-  std::ifstream openFileStream(const std::string& fileName) const;
+  void openFileStream(const std::string& fileName);
   void moveToNextValidRow();
 
   std::ifstream m_inputStream;

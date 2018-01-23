@@ -6,7 +6,7 @@
 
 CSVReader::CSVReader(const std::string& fileName)
 {
-  m_inputStream = openFileStream(fileName);
+  openFileStream(fileName);
   moveToNextValidRow();
 }
 
@@ -22,15 +22,13 @@ std::vector<std::string> CSVReader::nextRow()
   return rowEntries;
 }
 
-std::ifstream CSVReader::openFileStream(const std::string& fileName) const
+void CSVReader::openFileStream(const std::string& fileName)
 {
-  std::ifstream fileStream;
-  fileStream.open(fileName.c_str());
-  if (fileStream.fail())
+  m_inputStream.open(fileName.c_str());
+  if (m_inputStream.fail())
   {
     throw FileNotFoundException(fileName);
   }
-  return fileStream;
 }
 
 void CSVReader::moveToNextValidRow()
@@ -51,4 +49,3 @@ void CSVReader::moveToNextValidRow()
     m_inputStream.close();
   }
 }
-
