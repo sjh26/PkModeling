@@ -1,11 +1,14 @@
 #include "ArterialInputFunctionPopulation.h"
 
 #include "SignalComputationUtils.h"
+#include <math.h>
 
 // work around compile error on Windows
+#ifndef M_PI
 #define M_PI 3.1415926535897932384626433832795
+#endif
 
-ArterialInputFunctionPopulation::ArterialInputFunctionPopulation(const std::vector<float>& referenceSignalTime, 
+ArterialInputFunctionPopulation::ArterialInputFunctionPopulation(const std::vector<float>& referenceSignalTime,
                                                                  const float bolusArrivalTimeFraction)
                                                                  : m_referenceSignalTime(referenceSignalTime),
                                                                    m_bolusArrivalTimeFraction(bolusArrivalTimeFraction)
@@ -137,4 +140,3 @@ std::vector<float> ArterialInputFunctionPopulation::computeAIF() const
 
   return rAIF;
 }
-

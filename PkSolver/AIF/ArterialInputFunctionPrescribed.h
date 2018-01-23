@@ -3,6 +3,8 @@
 
 #include "ArterialInputFunction.h"
 
+#include <string>
+
 
 class ArterialInputFunctionPrescribed : public ArterialInputFunction
 {
