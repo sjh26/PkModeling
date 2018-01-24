@@ -23,7 +23,7 @@
 
 namespace itk
 {
-  using namespace PkSolver;
+  using namespace SignalUtils;
   //
   // Support routines/classes used internally in the PkSolver
   //
@@ -36,113 +36,6 @@ namespace itk
   // Implementation of the PkSolver API
   //
   //
-
-  bool pk_solver(int signalSize, const float* timeAxis,
-    const float* PixelConcentrationCurve,
-    const float* BloodConcentrationCurve,
-    float& Ktrans, float& Ve, float& Fpv,
-    float fTol, float gTol, float xTol,
-    float epsilon, int maxIter,
-    float hematocrit,
-    int modelType,
-    const BolusArrivalTime::BolusArrivalTimeEstimator* batEstimator)
-  {
-    // Note the unit: timeAxis should be in minutes!! This could be related to the following parameters!!
-    // fTol      =  1e-4;  // Function value tolerance
-    // gTol      =  1e-4;  // Gradient magnitude tolerance
-    // xTol      =  1e-5;  // Search space tolerance
-    // epsilon   =  1e-9;    // Step
-    // maxIter   =   200;  // Maximum number of iterations
-
-    m_batEstimator = batEstimator;
-
-    // Levenberg Marquardt optimizer
-    itk::LevenbergMarquardtOptimizer::Pointer  optimizer = itk::LevenbergMarquardtOptimizer::New();
-    LMCostFunction::Pointer costFunction = LMCostFunction::New();
-
-    LMCostFunction::ParametersType initialValue;
-    if (modelType == itk::LMCostFunction::TOFTS_2_PARAMETER)
-    {
-      initialValue = LMCostFunction::ParametersType(2); ///...
-    }
-    else
-    {
-      initialValue = LMCostFunction::ParametersType(3);
-      initialValue[2] = 0.1;     //f_pv //...
-    }
-    initialValue[0] = 0.1;     //Ktrans //...
-    initialValue[1] = 0.5;     //ve //...
-
-    costFunction->SetNumberOfValues(signalSize);
-
-    costFunction->SetCb(BloodConcentrationCurve, signalSize); //BloodConcentrationCurve
-    costFunction->SetCv(PixelConcentrationCurve, signalSize); //Signal Y
-    costFunction->SetTime(timeAxis, signalSize); //Signal X
-    costFunction->SetHematocrit(hematocrit);
-    costFunction->GetValue(initialValue);
-    costFunction->SetModelType(modelType);
-
-    try
-    {
-      optimizer->SetCostFunction(costFunction.GetPointer());
-    }
-    catch (itk::ExceptionObject & e)
-    {
-      std::cout << "Exception thrown ! " << std::endl;
-      std::cout << "An error ocurred during Optimization" << std::endl;
-      std::cout << e << std::endl;
-      return false;
-    }
-
-    // this following call is equivalent to invoke: costFunction->SetUseGradient( useGradient );
-    optimizer->UseCostFunctionGradientOff();
-    optimizer->SetUseCostFunctionGradient(0);
-
-    itk::LevenbergMarquardtOptimizer::InternalOptimizerType * vnlOptimizer = optimizer->GetOptimizer();
-
-    vnlOptimizer->set_f_tolerance(fTol);
-    vnlOptimizer->set_g_tolerance(gTol);
-    vnlOptimizer->set_x_tolerance(xTol);
-    vnlOptimizer->set_epsilon_function(epsilon);
-    vnlOptimizer->set_max_function_evals(maxIter);
-
-    // We start not so far from the solution
-
-    optimizer->SetInitialPosition(initialValue);
-
-    CommandIterationUpdateLevenbergMarquardt::Pointer observer =
-      CommandIterationUpdateLevenbergMarquardt::New();
-    optimizer->AddObserver(itk::IterationEvent(), observer);
-    optimizer->AddObserver(itk::FunctionEvaluationIterationEvent(), observer);
-
-    try
-    {
-      optimizer->StartOptimization();
-    }
-    catch (itk::ExceptionObject & e)
-    {
-      std::cerr << "Exception thrown ! " << std::endl;
-      std::cerr << "An error ocurred during Optimization" << std::endl;
-      std::cerr << "Location    = " << e.GetLocation() << std::endl;
-      std::cerr << "Description = " << e.GetDescription() << std::endl;
-      return false;
-    }
-
-    itk::LevenbergMarquardtOptimizer::ParametersType finalPosition;
-    finalPosition = optimizer->GetCurrentPosition();
-
-    //Solution: remove the scale of 100
-    Ktrans = finalPosition[0];
-    Ve = finalPosition[1];
-    if (modelType == itk::LMCostFunction::TOFTS_3_PARAMETER)
-    {
-      Fpv = finalPosition[2];
-    }
-
-    std::cout << optimizer->GetStopConditionDescription() << std::endl;
-
-    return true;
-  }
 
   unsigned pk_solver(int signalSize, const float* timeAxis,
     const float* PixelConcentrationCurve,

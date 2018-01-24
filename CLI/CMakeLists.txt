@@ -17,7 +17,9 @@ endif()
 
 #-----------------------------------------------------------------------------
 set(MODULE_SRCS
+  ${MODULE_NAME}.hxx
   ${MODULE_NAME}.cxx
+  Configuration.h
   itkSignalIntensityToS0ImageFilter.h
   itkSignalIntensityToS0ImageFilter.hxx
   itkSignalIntensityToConcentrationImageFilter.h

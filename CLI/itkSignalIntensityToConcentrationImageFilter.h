@@ -199,10 +199,9 @@ namespace itk
       void GoToBegin();
       T1PreValueMapper& operator++();
 
-    protected:
+    private:
       InputMaskConstIterType* getNewConstMaskIterOrNull(const InputMaskType* inMask);
 
-    private:
       InputMaskConstIterType* roiMaskVolumeIter;
       InputMaskConstIterType* aifMaskVolumeIter;
       InputMaskConstIterType* T1MapVolumeIter;

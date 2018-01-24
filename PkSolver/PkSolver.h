@@ -21,11 +21,13 @@
 #include "itkArray.h"
 #include <string>
 #include <exception>
-#include "BolusArrivalTimeEstimator.h"
+#include "BAT/BolusArrivalTimeEstimator.h"
 
 
 // work around compile error on Win
+#ifndef M_PI
 #define M_PI 3.1415926535897932384626433832795
+#endif
 
 class NoSignalException : public std::exception
 {
@@ -297,18 +299,6 @@ namespace itk
     itk::FunctionEvaluationIterationEvent m_FunctionEvent;
     itk::GradientEvaluationIterationEvent m_GradientEvent;
   };
-  bool pk_solver(int signalSize, const float* timeAxis,
-    const float* PixelConcentrationCurve,
-    const float* BloodConcentrationCurve,
-    float& Ktrans, float& Ve, float& Fpv,
-    float fTol = 1e-4f,
-    float gTol = 1e-4f,
-    float xTol = 1e-5f,
-    float epsilon = 1e-9f,
-    int maxIter = 200,
-    float hematocrit = 0.4f,
-    int modelType = itk::LMCostFunction::TOFTS_2_PARAMETER,
-    const BolusArrivalTime::BolusArrivalTimeEstimator* batEstimator = NULL);
 
   // returns diagnostic error code from the VNL optimizer,
   //  as defined by OptimizerDiagnosticCodes, and masked to indicate

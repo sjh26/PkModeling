@@ -17,6 +17,7 @@
 #include "itkCastImageFilter.h"
 #include "PkSolver.h"
 #include <string>
+#include "AIF/ArterialInputFunction.h"
 
 namespace itk
 {
@@ -145,27 +146,6 @@ namespace itk
     void SetTiming(const std::vector<float>& inputTiming);
     const std::vector<float>& GetTiming();
 
-    /// Control whether a prescribed AIF vector is used or whether the
-    /// AIF is specified by a mask. If UsePrescribedAIF is true, then
-    /// an AIF supplied as a vector is used rather than being derived
-    /// from a mask applied to the input concentration values. Default
-    /// is off.
-    itkSetMacro(UsePrescribedAIF, bool);
-    itkGetMacro(UsePrescribedAIF, bool);
-    itkBooleanMacro(UsePrescribedAIF);
-
-    /// Control whether a population AIF vector is used.
-    itkSetMacro(UsePopulationAIF, bool);
-    itkGetMacro(UsePopulationAIF, bool);
-    itkBooleanMacro(UsePopulationAIF);
-
-    /// Set a mask to specify where the AIF is be calculated from the
-    /// input concentration image.
-    void SetAIFMask(const MaskVolumeType* volume);
-
-    /// Get the mask that specifies from where the AIF is calculated
-    const TMaskImage* GetAIFMask() const;
-
     /// Set a mask to specify where the model fit is be calculated from the
     /// input concentration image.
     void SetROIMask(const MaskVolumeType* volume);
@@ -174,22 +154,8 @@ namespace itk
     const TMaskImage* GetROIMask() const;
 
 
-    /// Set the AIF as a vector of timing and concentration
-    /// values. Timing specified in seconds.
-    void SetPrescribedAIF(const std::vector<float>& timing,
-      const std::vector<float>& aif);
-
-    /// Get the prescribed AIF
-    const std::vector<float>& GetPrescribedAIF()
-    {
-      return m_PrescribedAIF;
-    }
-
-    /// Get the timing of the prescribed AIF (ms)
-    const std::vector<float>& GetPrescribedAIFTiming()
-    {
-      return m_PrescribedAIFTiming;
-    }
+    /// Set the AIF
+    void SetAIF(const ArterialInputFunction* aif);
 
     /// Get the quantitative output images
     TOutputImage* GetKTransOutput();
@@ -221,10 +187,6 @@ namespace itk
 
 #endif
 
-    //std::vector<float> CalculatePopulationAIF( const size_t time_of_bolus, std::vector<float> timing );
-    std::vector<float> CalculatePopulationAIF(std::vector<float> timing, float bolus_arrival_fraction);
-    std::vector<float> CalculateAverageAIF(const VectorVolumeType* inputVectorVolume, const MaskVolumeType* maskVolume);
-    std::vector<float> ResampleAIF(std::vector<float> t1, std::vector<float> y1, std::vector<float> t2);
 
   private:
     ConcentrationToQuantitativeImageFilter(const Self &); // purposely not implemented
@@ -245,13 +207,9 @@ namespace itk
     int    m_AIFBATIndex;
     int    m_ModelType;
     const BolusArrivalTime::BolusArrivalTimeEstimator* m_batEstimator;
+    const ArterialInputFunction* m_aif;
 
     std::vector<float> m_Timing;
-
-    bool m_UsePopulationAIF;
-    bool m_UsePrescribedAIF;
-    std::vector<float> m_PrescribedAIF;
-    std::vector<float> m_PrescribedAIFTiming;
 
     // variables to cache information to share between threads
     std::vector<float> m_AIF;

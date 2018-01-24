@@ -107,13 +107,16 @@
       <description><![CDATA[Enable estimation of fractional plasma volume at each voxel.]]></description>
       <default>False</default>
     </boolean>
-    <boolean>
-      <name>UsePopulationAIF</name>
-      <longflag>usePopAif</longflag>
-      <label>Use Population AIF </label>
-      <description><![CDATA[Use generic population AIF.]]></description>
-      <default>False</default>
-    </boolean>
+    <string-enumeration>
+      <name>AIFMode</name>
+      <longflag>aifMode</longflag>
+      <label>AIF Mode</label>
+      <description><![CDATA[Select the Mode for establishing the AIF. Make sure to specify input files, according your selection, in IO section.]]></description>
+      <default>AverageUnderAIFMask</default>
+      <element>AverageUnderAIFMask</element>
+      <element>Population</element>
+      <element>Prescribed</element>
+    </string-enumeration>
   </parameters>
   <parameters>
     <label>IO</label>

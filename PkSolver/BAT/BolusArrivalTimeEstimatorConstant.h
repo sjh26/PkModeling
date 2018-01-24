@@ -21,7 +21,7 @@ namespace BolusArrivalTime
       return m_defaultBATIndex;
     }
 
-  protected:
+  private:
     const int m_defaultBATIndex;
 
   };
