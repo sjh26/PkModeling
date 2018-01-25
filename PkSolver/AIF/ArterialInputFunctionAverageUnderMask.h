@@ -14,7 +14,7 @@ public:
   typedef itk::VectorImage<float, 3> VectorVolume;
   typedef itk::Image<unsigned short, 3> MaskVolume;
 
-  ArterialInputFunctionAverageUnderMask(const VectorVolume* inputVectorVolume, const MaskVolume* maskVolume);
+  ArterialInputFunctionAverageUnderMask(VectorVolume* inputVectorVolume, MaskVolume* maskVolume);
 
   virtual ~ArterialInputFunctionAverageUnderMask() {}
 
@@ -30,8 +30,8 @@ private:
   inline std::vector<float> add(std::vector<float> vec1, const VectorVoxel& vec2) const;
   inline std::vector<float> divide(std::vector<float> vec, long div) const;
 
-  const itk::VectorImage<float, 3>* const m_inputVectorVolume;
-  const itk::Image<unsigned short, 3>* const m_maskVolume;
+  itk::VectorImage<float, 3>* const m_inputVectorVolume;
+  itk::Image<unsigned short, 3>* const m_maskVolume;
   std::vector<float> m_aif;
 };
 
