@@ -207,7 +207,7 @@ private:
       maskVolumeReader->Update();
       maskVolume = maskVolumeReader->GetOutput();
     }
-    catch (...) 
+    catch (...)
     { }
     return maskVolume;
   }
@@ -255,7 +255,7 @@ private:
   {
     try
     {
-      itk::ImageFileWriter<TOutVolume>::Pointer volumeWriter = itk::ImageFileWriter<TOutVolume>::New();
+      typename itk::ImageFileWriter<TOutVolume>::Pointer volumeWriter = itk::ImageFileWriter<TOutVolume>::New();
       volumeWriter->SetFileName(fileName.c_str());
       volumeWriter->SetInput(outVolume);
       volumeWriter->SetUseCompression(1);
