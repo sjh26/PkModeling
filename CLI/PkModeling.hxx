@@ -31,7 +31,7 @@
 #include <memory>
 
 
-
+//! Slicer Extension providing pharmacokinetic modeling for dynamic contrast enhanced MRI.
 class PkModeling {
 // Helper typedefs to make the code easier to read with all the templates
 private:
@@ -79,6 +79,10 @@ public:
   PkModeling(Configuration config) : m_config(config) {}
   virtual ~PkModeling() {}
 
+  //! Main entry point, runs the whole model fitting.
+  //! Throws exceptions. Recommended to handle by catching a std::exception and
+  //! print its meassage. If an exception reaches this high, there is nothing
+  //! else you can do, but notify the user.
   int execute()
   {
     initialize();
