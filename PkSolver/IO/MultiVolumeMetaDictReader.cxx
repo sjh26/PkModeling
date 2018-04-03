@@ -37,7 +37,7 @@ std::vector<float> MultiVolumeMetaDictReader::getTiming()
       std::string frameLabelsString;
       itk::ExposeMetaData(m_dictionary, "MultiVolume.FrameLabels", frameLabelsString);
       std::stringstream frameLabelsStream(frameLabelsString);
-      if (tag == "TriggerTime" || tag == "AcquisitionTime" || tag == "SeriesTime" || tag == "ContentTime")
+      if (tag == "TriggerTime" || tag == "AcquisitionTime" || tag == "SeriesTime" || tag == "ContentTime" || tag == "Time")
       {
         float t;
         float t0 = 0.0;
