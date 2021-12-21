@@ -44,6 +44,7 @@ namespace itk
     this->Superclass::SetNthOutput(6, static_cast<TOutputImage*>(this->MakeOutput(6).GetPointer()));  // BAT
     this->Superclass::SetNthOutput(7, static_cast<VectorVolumeType*>(this->MakeOutput(7).GetPointer())); // fitted
     this->Superclass::SetNthOutput(8, static_cast<TOutputImage*>(this->MakeOutput(8).GetPointer())); // diagnostics
+    this->DynamicMultiThreadingOff();
   }
 
   template< class TInputImage, class TMaskImage, class TOutputImage >

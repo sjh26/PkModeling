@@ -36,6 +36,7 @@ namespace itk
         {
             // We require two inputs to execute.
             this->SetNumberOfRequiredInputs(2);
+            this->DynamicMultiThreadingOff();
 
             // Set the default DifferenceThreshold.
             m_DifferenceThreshold = NumericTraits< OutputPixelType >::ZeroValue();
