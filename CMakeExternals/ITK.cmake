@@ -25,7 +25,7 @@ endif()
 
 if(NOT DEFINED ITK_DIR AND NOT ${CMAKE_PROJECT_NAME}_USE_SYSTEM_${proj})
 
-  set(revision_tag "stripped-down")
+  set(revision_tag "v5.2.1")
   if(${proj}_REVISION_TAG)
     set(revision_tag ${${proj}_REVISION_TAG})
   endif()
@@ -37,7 +37,7 @@ if(NOT DEFINED ITK_DIR AND NOT ${CMAKE_PROJECT_NAME}_USE_SYSTEM_${proj})
     set(location_args GIT_REPOSITORY ${${proj}_GIT_REPOSITORY}
                       GIT_TAG ${revision_tag})
   else()
-    set(location_args GIT_REPOSITORY "${git_protocol}://github.com/fedorov/ITK-dcmqi.git"
+    set(location_args GIT_REPOSITORY "${git_protocol}://github.com/InsightSoftwareConsortium/ITK"
                       GIT_TAG ${revision_tag})
   endif()
 

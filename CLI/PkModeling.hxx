@@ -7,7 +7,6 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkTimeProbesCollectorBase.h"
-#include "itkMultiThreader.h"
 #include "itkResampleImageFilter.h"
 #include "itkNearestNeighborInterpolateImageFunction.h"
 
@@ -200,7 +199,7 @@ private:
   MaskVolumeType::Pointer getMaskVolumeOrNull(const std::string& maskFileName)
   {
     MaskVolumeReaderType::Pointer maskVolumeReader = MaskVolumeReaderType::New();
-    MaskVolumeType::Pointer maskVolume = NULL;
+    MaskVolumeType::Pointer maskVolume = nullptr;
     try
     {
       maskVolumeReader->SetFileName(maskFileName.c_str());
