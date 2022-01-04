@@ -19,7 +19,7 @@ namespace itk
   SignalIntensityToS0ImageFilter<TInputImage, TOutputImage>::SignalIntensityToS0ImageFilter()
   {
     m_S0GradThresh = 15.0f;
-
+    this->DynamicMultiThreadingOff();
   }
 
   template <class TInputImage, class TOutputImage>
