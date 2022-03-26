@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.5.0)
 
-set(CMAKE_CXX_STANDARD 11)
+#-----------------------------------------------------------------------------
+# Set C++ standard version and extensions
+#-----------------------------------------------------------------------------
+# Cache the variable values to allow setting a value externally.
+set(_minimum_cxx_standard "11")
+set(CMAKE_CXX_STANDARD "${_minimum_cxx_standard}" CACHE STRING "C++ standard")
+if("${CMAKE_CXX_STANDARD}" LESS "${_minimum_cxx_standard}")
+  message(FATAL_ERROR "CMAKE_CXX_STANDARD must be equal or larger than ${_minimum_cxx_standard}")
+endif()
 
 set(EXTENSION_NAME PkModeling)
 set(EXTENSION_HOMEPAGE "https://github.com/millerjv/PkModeling/wiki/PkModeling")
